@@ -1,10 +1,18 @@
 "use client";
 
-import { PlusIcon } from "@phosphor-icons/react";
+import { MagnifyingGlassIcon, PlusIcon } from "@phosphor-icons/react";
 import { useMutation, useQuery } from "convex/react";
 import { makeFunctionReference } from "convex/server";
 import { useEffect, useMemo, useState } from "react";
+import {
+  Group,
+  type LayoutStorage,
+  Panel,
+  Separator,
+  useDefaultLayout,
+} from "react-resizable-panels";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 
@@ -27,6 +35,23 @@ export function SimpleNotesApp() {
 
   const [selectedNoteId, setSelectedNoteId] = useState<string | null>(null);
   const [draft, setDraft] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const layoutStorage = useMemo<LayoutStorage>(
+    () => ({
+      getItem: (key) =>
+        typeof window === "undefined" ? null : window.localStorage.getItem(key),
+      setItem: (key, value) => {
+        if (typeof window !== "undefined") {
+          window.localStorage.setItem(key, value);
+        }
+      },
+    }),
+    [],
+  );
+  const { defaultLayout, onLayoutChanged } = useDefaultLayout({
+    id: "townbase-notes-layout",
+    storage: layoutStorage,
+  });
 
   useEffect(() => {
     if (notes.length === 0) {
@@ -46,6 +71,18 @@ export function SimpleNotesApp() {
     () => notes.find((note) => note._id === selectedNoteId) ?? null,
     [notes, selectedNoteId],
   );
+
+  const filteredNotes = useMemo(() => {
+    const normalizedQuery = searchQuery.trim().toLowerCase();
+
+    if (!normalizedQuery) {
+      return notes;
+    }
+
+    return notes.filter((note) =>
+      note.content.toLowerCase().includes(normalizedQuery),
+    );
+  }, [notes, searchQuery]);
 
   useEffect(() => {
     if (!selected) {
@@ -76,36 +113,57 @@ export function SimpleNotesApp() {
   }
 
   return (
-    <main className="min-h-screen bg-stone-100 px-4 py-6 text-stone-900 md:px-8">
-      <section className="mx-auto grid h-[calc(100vh-3rem)] w-full max-w-6xl grid-cols-1 gap-4 rounded-2xl border border-stone-200 bg-stone-50 p-3 shadow-sm md:grid-cols-[280px_1fr]">
-        <aside className="flex min-h-0 flex-col rounded-xl border border-stone-200 bg-white">
-          <header className="flex items-center justify-between border-b border-stone-200 px-4 py-3">
-            <h1 className="text-sm font-semibold uppercase tracking-[0.14em] text-stone-600">
-              Notes
-            </h1>
-            <Button
-              onClick={handleCreate}
-              size="icon-sm"
-              type="button"
-              variant="outline"
-            >
-              <PlusIcon size={16} weight="bold" />
-            </Button>
-          </header>
+    <main className="relative h-screen w-screen bg-stone-100 text-stone-900">
+      <Button
+        className="absolute right-3 top-3 z-10 border-stone-300 bg-white text-stone-700 hover:bg-stone-100"
+        onClick={handleCreate}
+        size="icon-sm"
+        type="button"
+        variant="outline"
+      >
+        <PlusIcon size={16} weight="bold" />
+      </Button>
 
-          <div className="min-h-0 flex-1 overflow-auto p-2">
-            {notes.length === 0 ? (
-              <p className="px-2 py-3 text-sm text-stone-500">
-                Create your first note with +
-              </p>
-            ) : (
-              notes.map((note) => (
+      <Group
+        className="h-full w-full"
+        defaultLayout={defaultLayout}
+        onLayoutChanged={onLayoutChanged}
+        orientation="horizontal"
+      >
+        <Panel
+          className="min-h-0"
+          defaultSize="28%"
+          id="notes-sidebar"
+          maxSize="42%"
+          minSize="20%"
+        >
+          <aside className="flex h-full min-h-0 flex-col bg-stone-50">
+            <section className="px-2 py-2">
+              <label className="relative block" htmlFor="notes-search">
+                <MagnifyingGlassIcon
+                  className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-stone-500"
+                  size={16}
+                />
+                <Input
+                  className="h-11 w-full border-stone-300 bg-white pl-9 text-sm text-stone-700 placeholder:text-stone-400"
+                  id="notes-search"
+                  onChange={(event) => {
+                    setSearchQuery(event.target.value);
+                  }}
+                  placeholder="Search notes"
+                  value={searchQuery}
+                />
+              </label>
+            </section>
+
+            <section className="min-h-0 flex-1 space-y-1 overflow-auto px-2 pb-2">
+              {filteredNotes.map((note) => (
                 <button
                   className={cn(
-                    "mb-1 w-full rounded-lg border px-3 py-2 text-left transition",
+                    "h-11 w-full px-3 text-left text-sm transition",
                     selectedNoteId === note._id
-                      ? "border-stone-400 bg-stone-100"
-                      : "border-transparent hover:border-stone-200 hover:bg-stone-100/70",
+                      ? "bg-stone-200"
+                      : "hover:bg-stone-100",
                   )}
                   key={note._id}
                   onClick={() => {
@@ -113,29 +171,30 @@ export function SimpleNotesApp() {
                   }}
                   type="button"
                 >
-                  <p className="line-clamp-2 text-sm text-stone-700">
+                  <p className="line-clamp-1 text-stone-700">
                     {note.content.trim() || "Empty note"}
                   </p>
-                  <p className="mt-1 text-xs text-stone-500">
-                    {new Date(note.updatedAt).toLocaleString()}
-                  </p>
                 </button>
-              ))
-            )}
-          </div>
-        </aside>
+              ))}
+            </section>
+          </aside>
+        </Panel>
 
-        <section className="min-h-0 rounded-xl border border-stone-200 bg-white p-3 md:p-4">
-          <Textarea
-            className="h-full min-h-[340px] resize-none border-none bg-transparent p-2 text-[15px] leading-relaxed shadow-none focus-visible:ring-0"
-            onChange={(event) => {
-              setDraft(event.target.value);
-            }}
-            placeholder="Write your note..."
-            value={draft}
-          />
-        </section>
-      </section>
+        <Separator className="w-px cursor-col-resize bg-stone-300 transition hover:bg-stone-400" />
+
+        <Panel className="min-h-0" defaultSize="72%" id="notes-content">
+          <section className="flex h-full min-h-0 flex-col bg-stone-100">
+            <Textarea
+              className="h-full min-h-[340px] resize-none border-none bg-transparent px-6 py-5 text-[15px] leading-relaxed text-stone-800 shadow-none focus-visible:ring-0"
+              onChange={(event) => {
+                setDraft(event.target.value);
+              }}
+              placeholder="Start writing..."
+              value={draft}
+            />
+          </section>
+        </Panel>
+      </Group>
     </main>
   );
 }

@@ -1,0 +1,7 @@
+.oc
+.next
+node_modules
+.env*
+next-env.d.ts
+tsconfig.tsbuildinfo
+.vercel

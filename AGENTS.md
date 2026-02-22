@@ -31,6 +31,8 @@ bun add -D <package>     # Add dev dependency
 - **Composition**: Use hooks and context for shared logic
 - **Locality**: Keep related code together (co-located types, validations)
 - **Follow Patterns**: Match existing code style, don't introduce new patterns
+- **Semantic HTML**: Use semantic tags (main, section, article, nav, etc.) instead of divs when appropriate
+- **Minimize Divs**: If a div is used only for a single class, apply that class to the parent element instead
 
 ## Post-Change Checklist
 

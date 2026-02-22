@@ -6,10 +6,10 @@ import { Button } from "@/components/ui/button";
 
 export default function ComingSoon() {
   return (
-    <main className="min-h-screen flex items-center justify-center px-6 bg-stone-200 font-sans">
-      <div className="max-w-lg">
-        <h1 className="text-6xl font-mono font-semibold tracking-tight text-stone-900 mb-6 flex items-center gap-3">
-          <HouseSimpleIcon size={60} weight="fill" />
+    <main className="min-h-screen flex items-center justify-center px-4 bg-stone-200 font-sans">
+      <section className="max-w-lg">
+        <h1 className="text-4xl font-mono font-semibold tracking-tight text-stone-900 mb-4 flex items-center gap-3">
+          <HouseSimpleIcon size={36} weight="fill" />
           Townbase
         </h1>
         <p className="text-lg leading-relaxed text-stone-600 mb-6">
@@ -31,7 +31,7 @@ export default function ComingSoon() {
             Contribute
           </Link>
         </Button>
-      </div>
+      </section>
     </main>
   );
 }

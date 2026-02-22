@@ -1,6 +1,10 @@
 "use client";
 
-import { MagnifyingGlassIcon, PlusIcon } from "@phosphor-icons/react";
+import {
+  MagnifyingGlassIcon,
+  NotePencilIcon,
+  PlusIcon,
+} from "@phosphor-icons/react";
 import { useMutation, useQuery } from "convex/react";
 import { makeFunctionReference } from "convex/server";
 import { useEffect, useMemo, useState } from "react";
@@ -12,6 +16,14 @@ import {
   useDefaultLayout,
 } from "react-resizable-panels";
 import { Button } from "@/components/ui/button";
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
@@ -184,14 +196,44 @@ export function SimpleNotesApp() {
 
         <Panel className="min-h-0" defaultSize="72%" id="notes-content">
           <section className="flex h-full min-h-0 flex-col bg-stone-100">
-            <Textarea
-              className="h-full min-h-[340px] resize-none border-none bg-transparent px-6 py-5 text-[15px] leading-relaxed text-stone-800 shadow-none focus-visible:ring-0"
-              onChange={(event) => {
-                setDraft(event.target.value);
-              }}
-              placeholder="Start writing..."
-              value={draft}
-            />
+            {selected ? (
+              <Textarea
+                className="h-full min-h-[340px] resize-none border-none bg-transparent px-6 py-5 text-[15px] leading-relaxed text-stone-800 shadow-none focus-visible:ring-0"
+                onChange={(event) => {
+                  setDraft(event.target.value);
+                }}
+                placeholder="Start writing..."
+                value={draft}
+              />
+            ) : (
+              <Empty className="m-6 border-stone-300/70 bg-stone-50/80">
+                <EmptyHeader>
+                  <EmptyMedia
+                    variant="icon"
+                    className="bg-stone-200 text-stone-700"
+                  >
+                    <NotePencilIcon size={20} weight="duotone" />
+                  </EmptyMedia>
+                  <EmptyTitle className="text-stone-800">
+                    No note selected
+                  </EmptyTitle>
+                  <EmptyDescription className="text-stone-600">
+                    Pick an existing note from the left or create a fresh one to
+                    start writing.
+                  </EmptyDescription>
+                </EmptyHeader>
+                <EmptyContent>
+                  <Button
+                    className="bg-stone-800 text-stone-100 hover:bg-stone-700"
+                    onClick={handleCreate}
+                    type="button"
+                  >
+                    <PlusIcon size={16} weight="bold" />
+                    New note
+                  </Button>
+                </EmptyContent>
+              </Empty>
+            )}
           </section>
         </Panel>
       </Group>

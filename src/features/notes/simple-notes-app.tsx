@@ -56,8 +56,7 @@ type NotesState = {
 
 type NotesAction =
   | { type: "sync-selection"; notes: Note[] }
-  | { type: "sync-draft"; content: string }
-  | { type: "select-note"; noteId: string }
+  | { type: "select-note"; noteId: string; content: string }
   | { type: "set-draft"; draft: string }
   | { type: "set-search-query"; searchQuery: string }
   | { type: "set-delete-dialog-open"; isOpen: boolean }
@@ -104,16 +103,6 @@ function notesReducer(state: NotesState, action: NotesAction): NotesState {
         draft: first.content,
       };
     }
-    case "sync-draft": {
-      if (state.draft === action.content) {
-        return state;
-      }
-
-      return {
-        ...state,
-        draft: action.content,
-      };
-    }
     case "select-note": {
       if (state.selectedNoteId === action.noteId) {
         return state;
@@ -122,6 +111,7 @@ function notesReducer(state: NotesState, action: NotesAction): NotesState {
       return {
         ...state,
         selectedNoteId: action.noteId,
+        draft: action.content,
       };
     }
     case "set-draft": {
@@ -235,18 +225,6 @@ export function SimpleNotesApp() {
       note.content.toLowerCase().includes(normalizedQuery),
     );
   }, [notes, state.searchQuery]);
-
-  useEffect(() => {
-    if (!selected) {
-      return;
-    }
-
-    if (state.draft === selected.content) {
-      return;
-    }
-
-    dispatch({ type: "sync-draft", content: selected.content });
-  }, [selected, state.draft]);
 
   useEffect(() => {
     if (state.isDeleting || !selected || state.draft === selected.content) {
@@ -385,7 +363,11 @@ export function SimpleNotesApp() {
                   )}
                   key={note._id}
                   onClick={() => {
-                    dispatch({ type: "select-note", noteId: note._id });
+                    dispatch({
+                      type: "select-note",
+                      noteId: note._id,
+                      content: note.content,
+                    });
                   }}
                   type="button"
                 >

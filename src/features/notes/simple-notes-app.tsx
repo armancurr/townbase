@@ -4,10 +4,11 @@ import {
   MagnifyingGlassIcon,
   NotePencilIcon,
   PlusIcon,
+  TrashIcon,
 } from "@phosphor-icons/react";
 import { useMutation, useQuery } from "convex/react";
 import { makeFunctionReference } from "convex/server";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useReducer } from "react";
 import {
   Group,
   type LayoutStorage,
@@ -15,6 +16,17 @@ import {
   Separator,
   useDefaultLayout,
 } from "react-resizable-panels";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import {
   Empty,
@@ -34,20 +46,130 @@ type Note = {
   updatedAt: number;
 };
 
+type NotesState = {
+  selectedNoteId: string | null;
+  draft: string;
+  searchQuery: string;
+  isDeleteDialogOpen: boolean;
+  isDeleting: boolean;
+};
+
+type NotesAction =
+  | { type: "sync-selection"; notes: Note[] }
+  | { type: "sync-draft"; content: string }
+  | { type: "select-note"; noteId: string }
+  | { type: "set-draft"; draft: string }
+  | { type: "set-search-query"; searchQuery: string }
+  | { type: "set-delete-dialog-open"; isOpen: boolean }
+  | { type: "set-is-deleting"; isDeleting: boolean }
+  | { type: "created-note"; noteId: string }
+  | { type: "deleted-note" };
+
+const initialState: NotesState = {
+  selectedNoteId: null,
+  draft: "",
+  searchQuery: "",
+  isDeleteDialogOpen: false,
+  isDeleting: false,
+};
+
+function notesReducer(state: NotesState, action: NotesAction): NotesState {
+  switch (action.type) {
+    case "sync-selection": {
+      if (action.notes.length === 0) {
+        return {
+          ...state,
+          selectedNoteId: null,
+          draft: "",
+        };
+      }
+
+      const hasSelectedNote =
+        state.selectedNoteId !== null &&
+        action.notes.some((note) => note._id === state.selectedNoteId);
+
+      if (hasSelectedNote) {
+        return state;
+      }
+
+      const first = action.notes[0];
+
+      return {
+        ...state,
+        selectedNoteId: first._id,
+        draft: first.content,
+      };
+    }
+    case "sync-draft": {
+      return {
+        ...state,
+        draft: action.content,
+      };
+    }
+    case "select-note": {
+      return {
+        ...state,
+        selectedNoteId: action.noteId,
+      };
+    }
+    case "set-draft": {
+      return {
+        ...state,
+        draft: action.draft,
+      };
+    }
+    case "set-search-query": {
+      return {
+        ...state,
+        searchQuery: action.searchQuery,
+      };
+    }
+    case "set-delete-dialog-open": {
+      return {
+        ...state,
+        isDeleteDialogOpen: action.isOpen,
+      };
+    }
+    case "set-is-deleting": {
+      return {
+        ...state,
+        isDeleting: action.isDeleting,
+      };
+    }
+    case "created-note": {
+      return {
+        ...state,
+        selectedNoteId: action.noteId,
+        draft: "",
+      };
+    }
+    case "deleted-note": {
+      return {
+        ...state,
+        selectedNoteId: null,
+        draft: "",
+        isDeleteDialogOpen: false,
+      };
+    }
+    default: {
+      return state;
+    }
+  }
+}
+
 const notesApi = {
   list: makeFunctionReference<"query">("notes:list"),
   create: makeFunctionReference<"mutation">("notes:create"),
   update: makeFunctionReference<"mutation">("notes:update"),
+  remove: makeFunctionReference<"mutation">("notes:remove"),
 };
 
 export function SimpleNotesApp() {
   const notes = (useQuery(notesApi.list, {}) as Note[] | undefined) ?? [];
   const createNote = useMutation(notesApi.create);
   const updateNote = useMutation(notesApi.update);
-
-  const [selectedNoteId, setSelectedNoteId] = useState<string | null>(null);
-  const [draft, setDraft] = useState("");
-  const [searchQuery, setSearchQuery] = useState("");
+  const deleteNote = useMutation(notesApi.remove);
+  const [state, dispatch] = useReducer(notesReducer, initialState);
   const layoutStorage = useMemo<LayoutStorage>(
     () => ({
       getItem: (key) =>
@@ -66,26 +188,16 @@ export function SimpleNotesApp() {
   });
 
   useEffect(() => {
-    if (notes.length === 0) {
-      setSelectedNoteId(null);
-      setDraft("");
-      return;
-    }
-
-    if (!selectedNoteId || !notes.some((note) => note._id === selectedNoteId)) {
-      const first = notes[0];
-      setSelectedNoteId(first._id);
-      setDraft(first.content);
-    }
-  }, [notes, selectedNoteId]);
+    dispatch({ type: "sync-selection", notes });
+  }, [notes]);
 
   const selected = useMemo(
-    () => notes.find((note) => note._id === selectedNoteId) ?? null,
-    [notes, selectedNoteId],
+    () => notes.find((note) => note._id === state.selectedNoteId) ?? null,
+    [notes, state.selectedNoteId],
   );
 
   const filteredNotes = useMemo(() => {
-    const normalizedQuery = searchQuery.trim().toLowerCase();
+    const normalizedQuery = state.searchQuery.trim().toLowerCase();
 
     if (!normalizedQuery) {
       return notes;
@@ -94,47 +206,106 @@ export function SimpleNotesApp() {
     return notes.filter((note) =>
       note.content.toLowerCase().includes(normalizedQuery),
     );
-  }, [notes, searchQuery]);
+  }, [notes, state.searchQuery]);
 
   useEffect(() => {
     if (!selected) {
       return;
     }
 
-    setDraft(selected.content);
+    dispatch({ type: "sync-draft", content: selected.content });
   }, [selected]);
 
   useEffect(() => {
-    if (!selected || draft === selected.content) {
+    if (state.isDeleting || !selected || state.draft === selected.content) {
       return;
     }
 
     const timeout = setTimeout(() => {
-      void updateNote({ noteId: selected._id, content: draft });
+      void updateNote({ noteId: selected._id, content: state.draft });
     }, 350);
 
     return () => {
       clearTimeout(timeout);
     };
-  }, [draft, selected, updateNote]);
+  }, [selected, state.draft, state.isDeleting, updateNote]);
 
   async function handleCreate() {
     const noteId = await createNote({ content: "" });
-    setSelectedNoteId(noteId as string);
-    setDraft("");
+    dispatch({ type: "created-note", noteId: noteId as string });
+  }
+
+  function handleDeleteSelected() {
+    if (!selected) {
+      return;
+    }
+
+    const noteId = selected._id;
+
+    dispatch({ type: "set-is-deleting", isDeleting: true });
+
+    void deleteNote({ noteId })
+      .then(() => {
+        dispatch({ type: "deleted-note" });
+      })
+      .finally(() => {
+        dispatch({ type: "set-is-deleting", isDeleting: false });
+      });
   }
 
   return (
     <main className="relative h-screen w-screen bg-stone-100 text-stone-900">
-      <Button
-        className="absolute right-3 top-3 z-10 border-stone-300 bg-white text-stone-700 hover:bg-stone-100"
-        onClick={handleCreate}
-        size="icon-sm"
-        type="button"
-        variant="outline"
-      >
-        <PlusIcon size={16} weight="bold" />
-      </Button>
+      <section className="absolute right-3 top-3 z-10 flex items-center gap-2">
+        {selected ? (
+          <AlertDialog
+            onOpenChange={(isOpen) => {
+              dispatch({ type: "set-delete-dialog-open", isOpen });
+            }}
+            open={state.isDeleteDialogOpen}
+          >
+            <AlertDialogTrigger asChild>
+              <Button
+                className="border-stone-300 bg-white text-stone-700 hover:bg-stone-100"
+                disabled={state.isDeleting}
+                size="icon-sm"
+                type="button"
+                variant="outline"
+              >
+                <TrashIcon size={16} weight="bold" />
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent size="sm">
+              <AlertDialogHeader>
+                <AlertDialogTitle>Delete note?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This note will be permanently deleted and cannot be restored.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel disabled={state.isDeleting}>
+                  Cancel
+                </AlertDialogCancel>
+                <AlertDialogAction
+                  disabled={state.isDeleting}
+                  onClick={handleDeleteSelected}
+                  variant="destructive"
+                >
+                  Delete
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        ) : null}
+        <Button
+          className="border-stone-300 bg-white text-stone-700 hover:bg-stone-100"
+          onClick={handleCreate}
+          size="icon-sm"
+          type="button"
+          variant="outline"
+        >
+          <PlusIcon size={16} weight="bold" />
+        </Button>
+      </section>
 
       <Group
         className="h-full w-full"
@@ -160,10 +331,13 @@ export function SimpleNotesApp() {
                   className="h-11 w-full border-stone-300 bg-white pl-9 text-sm text-stone-700 placeholder:text-stone-400"
                   id="notes-search"
                   onChange={(event) => {
-                    setSearchQuery(event.target.value);
+                    dispatch({
+                      type: "set-search-query",
+                      searchQuery: event.target.value,
+                    });
                   }}
                   placeholder="Search notes"
-                  value={searchQuery}
+                  value={state.searchQuery}
                 />
               </label>
             </section>
@@ -173,13 +347,13 @@ export function SimpleNotesApp() {
                 <button
                   className={cn(
                     "h-11 w-full px-3 text-left text-sm transition",
-                    selectedNoteId === note._id
+                    state.selectedNoteId === note._id
                       ? "bg-stone-200"
                       : "hover:bg-stone-100",
                   )}
                   key={note._id}
                   onClick={() => {
-                    setSelectedNoteId(note._id);
+                    dispatch({ type: "select-note", noteId: note._id });
                   }}
                   type="button"
                 >
@@ -200,10 +374,10 @@ export function SimpleNotesApp() {
               <Textarea
                 className="h-full min-h-[340px] resize-none border-none bg-transparent px-6 py-5 text-[15px] leading-relaxed text-stone-800 shadow-none focus-visible:ring-0"
                 onChange={(event) => {
-                  setDraft(event.target.value);
+                  dispatch({ type: "set-draft", draft: event.target.value });
                 }}
                 placeholder="Start writing..."
-                value={draft}
+                value={state.draft}
               />
             ) : (
               <Empty className="m-6 border-stone-300/70 bg-stone-50/80">

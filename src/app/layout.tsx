@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { AppLockGate } from "@/components/app-lock-gate";
 import { ConvexClientProvider } from "@/providers/convex-provider";
 import "./globals.css";
 
@@ -28,7 +29,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="antialiased">
-        <ConvexClientProvider>{children}</ConvexClientProvider>
+        <AppLockGate>
+          <ConvexClientProvider>{children}</ConvexClientProvider>
+        </AppLockGate>
       </body>
     </html>
   );

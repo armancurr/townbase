@@ -56,3 +56,20 @@ export const update = mutation({
     return null;
   },
 });
+
+export const remove = mutation({
+  args: {
+    noteId: v.id("notes"),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const note = await ctx.db.get(args.noteId);
+    if (!note) {
+      throw new ConvexError("Note not found.");
+    }
+
+    await ctx.db.delete(args.noteId);
+
+    return null;
+  },
+});

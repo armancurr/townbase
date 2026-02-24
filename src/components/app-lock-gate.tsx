@@ -64,7 +64,7 @@ export function AppLockGate({ children }: AppLockGateProps) {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center px-4">
+    <main className="flex min-h-screen items-center justify-center bg-stone-200 px-4">
       <Input
         aria-invalid={hasError}
         autoComplete="current-password"

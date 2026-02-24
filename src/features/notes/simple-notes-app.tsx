@@ -77,6 +77,10 @@ function notesReducer(state: NotesState, action: NotesAction): NotesState {
   switch (action.type) {
     case "sync-selection": {
       if (action.notes.length === 0) {
+        if (state.selectedNoteId === null && state.draft === "") {
+          return state;
+        }
+
         return {
           ...state,
           selectedNoteId: null,
@@ -101,36 +105,60 @@ function notesReducer(state: NotesState, action: NotesAction): NotesState {
       };
     }
     case "sync-draft": {
+      if (state.draft === action.content) {
+        return state;
+      }
+
       return {
         ...state,
         draft: action.content,
       };
     }
     case "select-note": {
+      if (state.selectedNoteId === action.noteId) {
+        return state;
+      }
+
       return {
         ...state,
         selectedNoteId: action.noteId,
       };
     }
     case "set-draft": {
+      if (state.draft === action.draft) {
+        return state;
+      }
+
       return {
         ...state,
         draft: action.draft,
       };
     }
     case "set-search-query": {
+      if (state.searchQuery === action.searchQuery) {
+        return state;
+      }
+
       return {
         ...state,
         searchQuery: action.searchQuery,
       };
     }
     case "set-delete-dialog-open": {
+      if (state.isDeleteDialogOpen === action.isOpen) {
+        return state;
+      }
+
       return {
         ...state,
         isDeleteDialogOpen: action.isOpen,
       };
     }
     case "set-is-deleting": {
+      if (state.isDeleting === action.isDeleting) {
+        return state;
+      }
+
       return {
         ...state,
         isDeleting: action.isDeleting,
@@ -213,8 +241,12 @@ export function SimpleNotesApp() {
       return;
     }
 
+    if (state.draft === selected.content) {
+      return;
+    }
+
     dispatch({ type: "sync-draft", content: selected.content });
-  }, [selected]);
+  }, [selected, state.draft]);
 
   useEffect(() => {
     if (state.isDeleting || !selected || state.draft === selected.content) {

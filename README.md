@@ -1,6 +1,12 @@
+<div align="center">
+
+<img src="./apps/web/public/favicon.svg" width="120" height="120" alt="Townbase logo">
+
 # townbase
 
 townbase is a Bun-powered Next.js workspace app prototype for teams that want a single place to manage work, write docs, and review analytics.
+
+</div>
 
 Current routes in `apps/web`:
 

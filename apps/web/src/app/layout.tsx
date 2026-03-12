@@ -16,7 +16,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Townbase",
+  title: "townbase",
   description: "Every tool. One compound.",
 };
 

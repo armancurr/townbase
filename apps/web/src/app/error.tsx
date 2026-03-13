@@ -16,9 +16,10 @@ export default function Error() {
         </div>
         <div className="hidden self-stretch border-l border-stone-400/40 md:block" />
         <div className="h-px w-full bg-stone-400/40 md:hidden" />
-          <p className="max-w-md text-left text-base text-stone-600">
-            An unexpected problem interrupted this route. Try refreshing the page or going back to the previous screen.
-          </p>
+        <p className="max-w-md text-left text-base text-stone-600">
+          An unexpected problem interrupted this route. Try refreshing the page
+          or going back to the previous screen.
+        </p>
       </section>
     </main>
   );

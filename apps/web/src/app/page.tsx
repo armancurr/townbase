@@ -1,27 +1,19 @@
 "use client";
 
-import {
-  HouseSimple,
-  CheckCircleIcon,
-  ChatCircleIcon,
-  CurrencyDollarSimpleIcon,
-} from "@phosphor-icons/react";
+import { Fragment } from "react";
+import Link from "next/link";
+
+import { HouseSimple, BookOpenTextIcon } from "@phosphor-icons/react";
+
+import { Separator } from "@/components/ui/separator";
 
 const tools = [
   {
-    icon: CheckCircleIcon,
-    name: "Tasks",
-    description: "Organize work with kanban boards and track progress.",
-  },
-  {
-    icon: ChatCircleIcon,
-    name: "Docs",
-    description: "Write, collaborate, and share documents in real-time.",
-  },
-  {
-    icon: CurrencyDollarSimpleIcon,
-    name: "Analytics",
-    description: "Visualize data and gain insights from your workspace.",
+    href: "/notes",
+    icon: BookOpenTextIcon,
+    name: "Notes",
+    description:
+      "Capture loose inputs, process them into next actions, and keep someday ideas parked.",
   },
 ];
 
@@ -42,17 +34,33 @@ export default function HomePage() {
           </p>
         </section>
 
-        <section className="mt-16 grid grid-cols-1 gap-8 md:grid-cols-3">
-          {tools.map((tool) => (
-            <div key={tool.name} className="flex flex-col gap-3">
-              <div className="flex items-center gap-2">
-                <tool.icon size="24" className="text-teal-800" weight="fill" />
-                <h3 className="font-mono text-base font-semibold text-stone-900">
-                  {tool.name}
-                </h3>
-              </div>
-              <p className="text-sm text-stone-600">{tool.description}</p>
-            </div>
+        <section className="mt-16 flex flex-col gap-6 md:flex-row md:items-stretch md:gap-8">
+          {tools.map((tool, index) => (
+            <Fragment key={tool.name}>
+              <Link href={tool.href} className="flex flex-1 flex-col gap-3">
+                <div className="flex items-center gap-2">
+                  <tool.icon
+                    size="24"
+                    className="text-teal-800"
+                    weight="fill"
+                  />
+                  <h3 className="font-mono text-base font-semibold text-stone-900">
+                    {tool.name}
+                  </h3>
+                </div>
+                <p className="text-sm text-stone-600">{tool.description}</p>
+              </Link>
+
+              {index < tools.length - 1 ? (
+                <>
+                  <Separator className="bg-stone-300 md:hidden" />
+                  <Separator
+                    orientation="vertical"
+                    className="hidden bg-stone-300 md:block"
+                  />
+                </>
+              ) : null}
+            </Fragment>
           ))}
         </section>
       </div>

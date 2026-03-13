@@ -14,9 +14,10 @@ export default function UnauthorizedPage() {
         </div>
         <div className="hidden self-stretch border-l border-stone-400/40 md:block" />
         <div className="h-px w-full bg-stone-400/40 md:hidden" />
-          <p className="max-w-md text-left text-base text-stone-600">
-            You need to sign in before entering this area. This workspace requires authentication to access its contents.
-          </p>
+        <p className="max-w-md text-left text-base text-stone-600">
+          You need to sign in before entering this area. This workspace requires
+          authentication to access its contents.
+        </p>
       </section>
     </main>
   );

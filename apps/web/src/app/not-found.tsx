@@ -14,9 +14,10 @@ export default function NotFound() {
         </div>
         <div className="hidden self-stretch border-l border-stone-400/40 md:block" />
         <div className="h-px w-full bg-stone-400/40 md:hidden" />
-          <p className="max-w-md text-left text-base text-stone-600">
-            The town you landed on does not exist. It might have been moved, renamed, or deleted.
-          </p>
+        <p className="max-w-md text-left text-base text-stone-600">
+          The town you landed on does not exist. It might have been moved,
+          renamed, or deleted.
+        </p>
       </section>
     </main>
   );

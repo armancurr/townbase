@@ -14,9 +14,10 @@ export default function Loading() {
         </div>
         <div className="hidden self-stretch border-l border-stone-400/40 md:block" />
         <div className="h-px w-full bg-stone-400/40 md:hidden" />
-          <p className="max-w-md text-left text-base text-stone-600">
-            Preparing your workspace. Fetching the latest updates. This should only take a moment.
-          </p>
+        <p className="max-w-md text-left text-base text-stone-600">
+          Preparing your workspace. Fetching the latest updates. This should
+          only take a moment.
+        </p>
       </section>
     </main>
   );

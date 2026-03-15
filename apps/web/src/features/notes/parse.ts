@@ -30,7 +30,7 @@ export function createParsedTaskDrafts(body: string): ProcessTaskDraft[] {
       {
         id: `draft-${index}-${normalizedLine.replace(/[^a-z0-9]+/g, "-")}`,
         body: cleanedLine,
-        action: "",
+        details: "",
       },
     ];
   });
@@ -43,10 +43,10 @@ export function normalizeTaskDrafts(
 
   return drafts.flatMap((draft) => {
     const body = cleanCandidateLine(draft.body);
-    const action = draft.action.trim();
+    const details = draft.details.trim();
     const normalizedBody = normalizeTaskText(body);
 
-    if (!normalizedBody || !action || seen.has(normalizedBody)) {
+    if (!normalizedBody || seen.has(normalizedBody)) {
       return [];
     }
 
@@ -56,7 +56,7 @@ export function normalizeTaskDrafts(
       {
         ...draft,
         body,
-        action,
+        details,
       },
     ];
   });

@@ -2,11 +2,11 @@
 
 import { cn } from "@/lib/utils";
 import {
-  BookOpenText,
+  PenNibIcon,
   PencilSimpleIcon,
-  CheckFatIcon,
-  NoteBlankIcon,
-  HourglassIcon,
+  CheckCircleIcon,
+  TrayIcon,
+  TimerIcon,
 } from "@phosphor-icons/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -19,7 +19,7 @@ const routes = [
     href: "/notes/inbox",
     section: "inbox" as NotesSection,
     label: "Inbox",
-    icon: NoteBlankIcon,
+    icon: TrayIcon,
   },
   {
     href: "/notes/process",
@@ -31,13 +31,13 @@ const routes = [
     href: "/notes/tasks",
     section: "tasks" as NotesSection,
     label: "Tasks",
-    icon: CheckFatIcon,
+    icon: CheckCircleIcon,
   },
   {
     href: "/notes/someday",
     section: "someday" as NotesSection,
     label: "Someday",
-    icon: HourglassIcon,
+    icon: TimerIcon,
   },
 ];
 
@@ -53,7 +53,7 @@ export function NotesShell({ children }: { children: React.ReactNode }) {
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div className="space-y-3">
                 <div className="flex items-center gap-3">
-                  <BookOpenText
+                  <PenNibIcon
                     size={28}
                     weight="fill"
                     className="text-neutral-900"
@@ -94,7 +94,7 @@ export function NotesShell({ children }: { children: React.ReactNode }) {
                       : "text-muted-foreground hover:text-foreground",
                   )}
                 >
-                  <Icon size={14} weight="fill" />
+                  <Icon size={18} weight="fill" />
                   <span className="font-mono text-sm uppercase">
                     {route.label}
                   </span>

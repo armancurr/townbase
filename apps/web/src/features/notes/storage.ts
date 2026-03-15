@@ -30,7 +30,7 @@ function isTaskItem(value: unknown): value is TaskItem {
     isString(candidate.id) &&
     isString(candidate.sourceInboxId) &&
     isString(candidate.body) &&
-    isString(candidate.action) &&
+    isString(candidate.details) &&
     (candidate.status === "active" || candidate.status === "done") &&
     isString(candidate.createdAt) &&
     (candidate.completedAt === null || isString(candidate.completedAt))
@@ -68,13 +68,15 @@ function normalizeLegacyTaskItem(
         : isString(candidate.nextAction)
           ? candidate.nextAction
           : null));
-  const action = isString(candidate.action)
-    ? candidate.action
-    : isString(candidate.nextAction)
-      ? candidate.nextAction
-      : null;
+  const details = isString(candidate.details)
+    ? candidate.details
+    : isString(candidate.action)
+      ? candidate.action
+      : isString(candidate.nextAction)
+        ? candidate.nextAction
+        : "";
 
-  if (!body || !action) {
+  if (!body) {
     return null;
   }
 
@@ -82,7 +84,7 @@ function normalizeLegacyTaskItem(
     id: candidate.id,
     sourceInboxId: candidate.sourceInboxId,
     body,
-    action,
+    details,
     status: candidate.status,
     createdAt: candidate.createdAt,
     completedAt: candidate.completedAt,

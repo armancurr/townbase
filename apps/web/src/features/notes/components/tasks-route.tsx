@@ -14,7 +14,6 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "@/components/ui/empty";
-
 import { formatNoteTimestamp, getDescendingByTimestamp } from "../format";
 import { useNotes } from "./notes-provider";
 
@@ -24,7 +23,8 @@ function TaskGroup({
 }: {
   tasks: Array<{
     id: string;
-    action: string;
+    body: string;
+    details: string;
     status: "active" | "done";
     createdAt: string;
     completedAt: string | null;
@@ -47,34 +47,40 @@ function TaskGroup({
                 <p
                   className={
                     isCompleted
-                      ? "whitespace-pre-wrap text-sm leading-relaxed text-muted-foreground"
-                      : "whitespace-pre-wrap text-sm leading-relaxed text-foreground"
+                      ? "whitespace-pre-wrap text-md leading-relaxed font-medium text-muted-foreground"
+                      : "whitespace-pre-wrap text-md leading-relaxed font-medium text-foreground"
                   }
                 >
-                  {task.action}
+                  {task.body}
                 </p>
+                {task.details ? (
+                  <p className="whitespace-pre-wrap text-sm leading-relaxed text-muted-foreground">
+                    {task.details}
+                  </p>
+                ) : null}
               </div>
-              <div className="shrink-0">
+              <div className="flex shrink-0 items-center gap-3">
+                <time className="font-mono text-sm uppercase text-neutral-900">
+                  {formatNoteTimestamp(task.completedAt ?? task.createdAt)}
+                </time>
+                <span
+                  aria-hidden="true"
+                  className="h-3.5 w-px bg-neutral-900/30"
+                />
                 <Button
                   variant="ghost"
-                  size="sm"
+                  size="icon-sm"
                   onClick={() => onToggle(task.id)}
-                  className="h-auto px-0 text-neutral-900 hover:bg-transparent hover:text-neutral-900"
+                  className="text-neutral-900 hover:bg-transparent hover:text-neutral-900"
+                  aria-label={
+                    isCompleted ? "Mark task active" : "Mark task done"
+                  }
                 >
-                  <span className="flex items-center gap-3">
-                    <time className="font-mono text-[10px] uppercase text-neutral-900">
-                      {formatNoteTimestamp(task.completedAt ?? task.createdAt)}
-                    </time>
-                    <span
-                      aria-hidden="true"
-                      className="h-3.5 w-px bg-neutral-900/30"
-                    />
-                    {isCompleted ? (
-                      <CheckCircle size={14} weight="fill" />
-                    ) : (
-                      <Circle size={14} />
-                    )}
-                  </span>
+                  {isCompleted ? (
+                    <CheckCircle size={14} weight="fill" />
+                  ) : (
+                    <Circle size={14} />
+                  )}
                 </Button>
               </div>
             </div>

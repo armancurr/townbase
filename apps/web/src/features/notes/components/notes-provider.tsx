@@ -131,7 +131,7 @@ export function NotesProvider({ children }: { children: React.ReactNode }) {
             id: createId(),
             sourceInboxId: item.id,
             body: draft.body,
-            action: draft.action,
+            details: draft.details,
             status: "active",
             createdAt,
             completedAt: null,

@@ -40,10 +40,10 @@ export function InboxRoute() {
       {items.map((item) => (
         <article key={item.id}>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
-            <p className="max-w-2xl whitespace-pre-wrap text-sm leading-relaxed text-foreground">
+            <p className="max-w-2xl whitespace-pre-wrap text-md leading-relaxed text-foreground">
               {item.body}
             </p>
-            <time className="shrink-0 font-mono text-[10px] uppercase text-neutral-900">
+            <time className="shrink-0 font-mono text-sm uppercase text-neutral-900">
               {formatNoteTimestamp(item.createdAt)}
             </time>
           </div>

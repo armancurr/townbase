@@ -8,7 +8,7 @@ export type TaskItem = {
   id: string;
   sourceInboxId: string;
   body: string;
-  action: string;
+  details: string;
   status: "active" | "done";
   createdAt: string;
   completedAt: string | null;
@@ -32,5 +32,5 @@ export type NotesSection = "inbox" | "process" | "tasks" | "someday";
 export type ProcessTaskDraft = {
   id: string;
   body: string;
-  action: string;
+  details: string;
 };

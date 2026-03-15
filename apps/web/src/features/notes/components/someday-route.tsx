@@ -1,8 +1,7 @@
 "use client";
 
-import { useMemo } from "react";
-
 import { CloudSun } from "@phosphor-icons/react";
+import { useMemo } from "react";
 
 import {
   Empty,
@@ -39,22 +38,14 @@ export function SomedayRoute() {
   }
 
   return (
-    <section className="flex flex-col gap-4">
+    <section className="flex flex-col gap-6">
       {items.map((item) => (
-        <article
-          key={item.id}
-          className="border-b border-border pb-4 last:border-b-0 last:pb-0"
-        >
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
-            <div className="space-y-2">
-              <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground">
-                {item.body}
-              </p>
-              <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
-                parked for later
-              </p>
-            </div>
-            <time className="shrink-0 font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+        <article key={item.id}>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
+            <p className="max-w-2xl whitespace-pre-wrap text-md leading-relaxed text-foreground">
+              {item.body}
+            </p>
+            <time className="shrink-0 font-mono text-sm uppercase text-neutral-900">
               {formatNoteTimestamp(item.createdAt)}
             </time>
           </div>

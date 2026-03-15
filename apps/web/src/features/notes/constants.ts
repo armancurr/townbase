@@ -55,7 +55,7 @@ export const SEEDED_STORE: NotesStore = {
       id: "task-ship-billing-copy",
       sourceInboxId: "seed-billing-copy",
       body: "Tighten billing page copy",
-      action:
+      details:
         "Rewrite the opening paragraph to explain plan differences in one pass.",
       status: "active",
       createdAt: "2026-03-09T08:30:00.000Z",
@@ -65,7 +65,7 @@ export const SEEDED_STORE: NotesStore = {
       id: "task-book-contractor-call",
       sourceInboxId: "seed-contractor-call",
       body: "Book contractor check-in",
-      action: "Call Sam after lunch and confirm the Friday review slot.",
+      details: "Call Sam after lunch and confirm the Friday review slot.",
       status: "active",
       createdAt: "2026-03-10T12:10:00.000Z",
       completedAt: null,
@@ -74,7 +74,7 @@ export const SEEDED_STORE: NotesStore = {
       id: "task-drop-off-returns",
       sourceInboxId: "seed-returns",
       body: "Drop off hardware returns",
-      action: "Bring the labeled box to the courier on the way home.",
+      details: "Bring the labeled box to the courier on the way home.",
       status: "done",
       createdAt: "2026-03-08T16:20:00.000Z",
       completedAt: "2026-03-08T18:10:00.000Z",

@@ -3,10 +3,10 @@
 import {
   CheckSquare,
   CirclesThree,
+  CloudSun,
   Trash,
 } from "@phosphor-icons/react/dist/ssr";
 import { useState } from "react";
-
 import { Button } from "@/components/ui/button";
 import {
   Empty,
@@ -16,7 +16,6 @@ import {
   EmptyTitle,
 } from "@/components/ui/empty";
 import { Textarea } from "@/components/ui/textarea";
-
 import { formatNoteTimestamp } from "../format";
 import { createParsedTaskDrafts } from "../parse";
 import { getCurrentInboxItem } from "../selectors";
@@ -41,8 +40,7 @@ function ProcessComposer({
     return createParsedTaskDrafts(currentItem.body);
   });
   const hasDrafts = drafts.length > 0;
-  const isValid =
-    hasDrafts && drafts.every((draft) => draft.action.trim().length > 0);
+  const isValid = hasDrafts;
 
   function saveTask() {
     if (!isValid) {
@@ -56,29 +54,33 @@ function ProcessComposer({
     <section className="flex flex-col gap-8">
       <article>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
-          <p className="whitespace-pre-wrap text-[15px] leading-relaxed text-foreground">
+          <p className="whitespace-pre-wrap text-md leading-relaxed text-foreground">
             {currentItem.body}
           </p>
           <div className="flex shrink-0 flex-col items-start gap-2 sm:items-end">
-            <time className="font-mono text-[10px] uppercase tracking-[0.16em] text-neutral-900">
+            <time className="font-mono text-sm uppercase text-neutral-900">
               {formatNoteTimestamp(currentItem.createdAt)}
             </time>
-            <div className="flex flex-col gap-2 sm:items-end">
+            <div className="flex items-center gap-1 sm:justify-end">
               <Button
                 variant="ghost"
-                size="sm"
+                size="icon-sm"
                 onClick={() => deleteInboxItem(currentItem.id)}
-                className="justify-start px-0 text-neutral-900 hover:bg-transparent hover:text-neutral-900"
+                className="text-neutral-900 hover:bg-muted hover:text-neutral-900"
+                aria-label="Delete note"
+                title="Delete"
               >
-                Delete
+                <Trash size={14} />
               </Button>
               <Button
                 variant="ghost"
-                size="sm"
+                size="icon-sm"
                 onClick={() => moveInboxItemToSomeday(currentItem.id)}
-                className="justify-start px-0 text-neutral-900 hover:bg-transparent hover:text-neutral-900"
+                className="text-neutral-900 hover:bg-muted hover:text-neutral-900"
+                aria-label="Move note to someday"
+                title="Move to someday"
               >
-                Move to someday
+                <CloudSun size={14} />
               </Button>
             </div>
           </div>
@@ -98,7 +100,7 @@ function ProcessComposer({
                   </div>
                   <Button
                     variant="ghost"
-                    size="sm"
+                    size="icon-sm"
                     onClick={() =>
                       setDrafts((currentDrafts) =>
                         currentDrafts.filter(
@@ -106,22 +108,23 @@ function ProcessComposer({
                         ),
                       )
                     }
-                    className="shrink-0 px-0 hover:bg-transparent"
+                    className="shrink-0 hover:bg-muted"
+                    aria-label="Remove task draft"
+                    title="Remove"
                   >
-                    <Trash size={14} data-icon="inline-start" />
-                    Remove
+                    <Trash size={14} />
                   </Button>
                 </div>
                 <div className="space-y-2">
                   <label
-                    htmlFor={`process-next-action-${draft.id}`}
+                    htmlFor={`process-task-details-${draft.id}`}
                     className="text-sm leading-none text-foreground"
                   >
-                    Next action
+                    Task details
                   </label>
                   <Textarea
-                    id={`process-next-action-${draft.id}`}
-                    value={draft.action}
+                    id={`process-task-details-${draft.id}`}
+                    value={draft.details}
                     onChange={(event) =>
                       setDrafts((currentDrafts) =>
                         currentDrafts.map((currentDraft) => {
@@ -131,12 +134,12 @@ function ProcessComposer({
 
                           return {
                             ...currentDraft,
-                            action: event.target.value,
+                            details: event.target.value,
                           };
                         }),
                       )
                     }
-                    placeholder="What's the next action?"
+                    placeholder="Optional details, notes, or constraints"
                     className="min-h-24 resize-none border-x-0 border-t-0 border-b border-border px-0 py-0 text-sm leading-relaxed shadow-none focus-visible:ring-0"
                   />
                 </div>

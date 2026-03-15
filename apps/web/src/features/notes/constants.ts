@@ -1,4 +1,4 @@
-import type { NotesSection, NotesStore, ProcessTaskDraft } from "./types";
+import type { NotesSection, NotesStore } from "./types";
 
 export const STORAGE_KEY = "townbase-notes-v1";
 
@@ -29,10 +29,6 @@ export const SECTION_COPY: Record<
     label: "Someday",
     description: "Park ideas without losing them.",
   },
-};
-
-export const EMPTY_PROCESS_TASK_DRAFT: ProcessTaskDraft = {
-  action: "",
 };
 
 export const DEFAULT_STORE: NotesStore = {

@@ -3,8 +3,9 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 
 import { DEFAULT_STORE } from "../constants";
+import { filterNewTaskDrafts, normalizeTaskDrafts } from "../parse";
 import { loadNotesStore, saveNotesStore } from "../storage";
-import type { NotesStore, ProcessTaskDraft } from "../types";
+import type { NotesStore, ProcessTaskDraft, TaskItem } from "../types";
 
 type NotesContextValue = {
   isHydrated: boolean;
@@ -12,7 +13,10 @@ type NotesContextValue = {
   addInboxItem: (body: string) => void;
   deleteInboxItem: (id: string) => void;
   moveInboxItemToSomeday: (id: string) => void;
-  createTaskFromInboxItem: (inboxId: string, draft: ProcessTaskDraft) => void;
+  createTasksFromInboxItem: (
+    inboxId: string,
+    drafts: ProcessTaskDraft[],
+  ) => void;
   markTaskDone: (id: string) => void;
   markTaskActive: (id: string) => void;
 };
@@ -103,11 +107,7 @@ export function NotesProvider({ children }: { children: React.ReactNode }) {
           };
         });
       },
-      createTaskFromInboxItem: (inboxId, draft) => {
-        if (!draft.action.trim()) {
-          return;
-        }
-
+      createTasksFromInboxItem: (inboxId, drafts) => {
         setStore((currentStore) => {
           const item = currentStore.inbox.find(
             (inboxItem) => inboxItem.id === inboxId,
@@ -117,23 +117,32 @@ export function NotesProvider({ children }: { children: React.ReactNode }) {
             return currentStore;
           }
 
+          const validDrafts = filterNewTaskDrafts(
+            normalizeTaskDrafts(drafts),
+            currentStore.tasks,
+          );
+
+          if (validDrafts.length === 0) {
+            return currentStore;
+          }
+
+          const createdAt = new Date().toISOString();
+          const newTasks: TaskItem[] = validDrafts.map((draft) => ({
+            id: createId(),
+            sourceInboxId: item.id,
+            body: draft.body,
+            action: draft.action,
+            status: "active",
+            createdAt,
+            completedAt: null,
+          }));
+
           return {
             ...currentStore,
             inbox: currentStore.inbox.filter(
               (inboxItem) => inboxItem.id !== inboxId,
             ),
-            tasks: [
-              {
-                id: createId(),
-                sourceInboxId: item.id,
-                body: item.body,
-                action: draft.action.trim(),
-                status: "active",
-                createdAt: new Date().toISOString(),
-                completedAt: null,
-              },
-              ...currentStore.tasks,
-            ],
+            tasks: [...newTasks, ...currentStore.tasks],
           };
         });
       },

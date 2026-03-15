@@ -30,5 +30,7 @@ export type NotesStore = {
 export type NotesSection = "inbox" | "process" | "tasks" | "someday";
 
 export type ProcessTaskDraft = {
+  id: string;
+  body: string;
   action: string;
 };

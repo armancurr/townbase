@@ -16,8 +16,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "townbase",
-  description: "Every tool. One compound.",
+  title: "Townbase - Most of the tool. One compound.",
+  description:
+    "A singular workspace housing every tool you need. Built for depth, designed for focus.",
   icons: {
     icon: "/favicon.svg",
     shortcut: "/favicon.svg",

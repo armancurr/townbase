@@ -1,9 +1,8 @@
 "use client";
 
-import { Fragment } from "react";
+import { BookOpenTextIcon, HouseSimple } from "@phosphor-icons/react";
 import Link from "next/link";
-
-import { HouseSimple, BookOpenTextIcon } from "@phosphor-icons/react";
+import { Fragment } from "react";
 
 import { Separator } from "@/components/ui/separator";
 

@@ -2,14 +2,11 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
-@custom-variant dark (&:is(.dark *));
-
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-  /* teal raw values for inline usage */
   --teal-50: oklch(0.97 0.02 190);
   --teal-100: oklch(0.94 0.04 191);
   --teal-200: oklch(0.88 0.07 192);
@@ -59,118 +56,39 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
-/* ─── DEFAULT THEME — dark neutral with teal accents ─────────────────── */
 :root {
-  /* near-black neutral background */
-  --background: oklch(0.145 0.005 285);
-  --foreground: oklch(0.93 0.005 285);
-
-  /* card: slightly lifted neutral */
-  --card: oklch(0.18 0.005 285);
-  --card-foreground: oklch(0.93 0.005 285);
-
-  --popover: oklch(0.18 0.005 285);
-  --popover-foreground: oklch(0.93 0.005 285);
-
-  /* primary: teal-400 — the accent */
-  --primary: oklch(0.7 0.13 194);
-  --primary-foreground: oklch(0.145 0.005 285);
-
-  /* secondary: dark neutral */
-  --secondary: oklch(0.22 0.005 285);
-  --secondary-foreground: oklch(0.85 0.01 285);
-
-  /* muted: dark neutral with subtle warmth */
-  --muted: oklch(0.22 0.005 285);
-  --muted-foreground: oklch(0.55 0.01 285);
-
-  /* accent: teal-tinted dark surface */
-  --accent: oklch(0.22 0.015 198);
-  --accent-foreground: oklch(0.88 0.04 192);
-
-  --destructive: oklch(0.704 0.191 22.216);
-
-  /* border: subtle neutral edge */
-  --border: oklch(1 0 0 / 8%);
-  --input: oklch(1 0 0 / 10%);
-
-  /* ring: teal-500 */
-  --ring: oklch(0.6 0.14 195);
-
-  /* charts: teal spectrum */
-  --chart-1: oklch(0.7 0.13 194);
-  --chart-2: oklch(0.6 0.14 195);
-  --chart-3: oklch(0.52 0.14 196);
-  --chart-4: oklch(0.43 0.12 198);
-  --chart-5: oklch(0.35 0.1 198);
-
-  --radius: 0.625rem;
-
-  /* sidebar */
-  --sidebar: oklch(0.16 0.005 285);
-  --sidebar-foreground: oklch(0.93 0.005 285);
-  --sidebar-primary: oklch(0.7 0.13 194);
-  --sidebar-primary-foreground: oklch(0.145 0.005 285);
-  --sidebar-accent: oklch(0.22 0.015 198);
-  --sidebar-accent-foreground: oklch(0.88 0.04 192);
-  --sidebar-border: oklch(1 0 0 / 8%);
-  --sidebar-ring: oklch(0.6 0.14 195);
-}
-
-/* ─── LIGHT THEME — teal ──────────────────────────────────────────────── */
-.dark {
-  /* teal-50 background */
   --background: oklch(0.97 0.02 190);
   --foreground: oklch(0.2 0.06 198);
-
-  /* card: white with faint teal tint */
   --card: oklch(1 0.01 191);
   --card-foreground: oklch(0.2 0.06 198);
-
   --popover: oklch(1 0.01 191);
   --popover-foreground: oklch(0.2 0.06 198);
-
-  /* primary: teal-600 */
-  --primary: oklch(0.52 0.14 196);
+  --primary: oklch(0.35 0.1 198);
   --primary-foreground: oklch(0.97 0.02 190);
-
-  /* secondary: teal-100 */
-  --secondary: oklch(0.94 0.04 191);
+  --secondary: oklch(0.94 0.02 85);
   --secondary-foreground: oklch(0.27 0.08 198);
-
-  /* muted: teal-100 */
-  --muted: oklch(0.94 0.04 191);
+  --muted: oklch(0.94 0.02 85);
   --muted-foreground: oklch(0.5 0.08 196);
-
-  /* accent: teal-200 */
   --accent: oklch(0.88 0.07 192);
   --accent-foreground: oklch(0.27 0.08 198);
-
   --destructive: oklch(0.577 0.245 27.325);
-
-  /* border: teal-200 */
   --border: oklch(0.88 0.07 192);
   --input: oklch(0.88 0.07 192);
-
-  /* ring: teal-400 */
-  --ring: oklch(0.7 0.13 194);
-
-  /* charts: teal spectrum */
+  --ring: oklch(0.35 0.1 198);
   --chart-1: oklch(0.6 0.14 195);
   --chart-2: oklch(0.52 0.14 196);
   --chart-3: oklch(0.43 0.12 198);
   --chart-4: oklch(0.35 0.1 198);
   --chart-5: oklch(0.27 0.08 198);
-
-  /* sidebar: teal-50 */
+  --radius: 0.625rem;
   --sidebar: oklch(0.97 0.02 190);
   --sidebar-foreground: oklch(0.2 0.06 198);
-  --sidebar-primary: oklch(0.52 0.14 196);
+  --sidebar-primary: oklch(0.35 0.1 198);
   --sidebar-primary-foreground: oklch(0.97 0.02 190);
-  --sidebar-accent: oklch(0.94 0.04 191);
+  --sidebar-accent: oklch(0.94 0.02 85);
   --sidebar-accent-foreground: oklch(0.27 0.08 198);
   --sidebar-border: oklch(0.88 0.07 192);
-  --sidebar-ring: oklch(0.7 0.13 194);
+  --sidebar-ring: oklch(0.35 0.1 198);
 }
 
 @layer base {

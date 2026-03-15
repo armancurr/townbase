@@ -1,10 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
-
 import { Tray } from "@phosphor-icons/react";
-
-import { Card, CardContent } from "@/components/ui/card";
 import {
   Empty,
   EmptyDescription,
@@ -12,7 +9,6 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "@/components/ui/empty";
-
 import { formatNoteTimestamp, getDescendingByTimestamp } from "../format";
 import { useNotes } from "./notes-provider";
 
@@ -40,20 +36,18 @@ export function InboxRoute() {
   }
 
   return (
-    <section className="flex flex-col gap-2">
+    <section className="flex flex-col gap-6">
       {items.map((item) => (
-        <Card key={item.id} size="sm">
-          <CardContent>
-            <p className="whitespace-pre-wrap text-xs leading-relaxed text-foreground">
+        <article key={item.id}>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
+            <p className="max-w-2xl whitespace-pre-wrap text-sm leading-relaxed text-foreground">
               {item.body}
             </p>
-          </CardContent>
-          <div className="px-4 pb-1 text-right">
-            <time className="font-mono text-[10px] text-muted-foreground">
+            <time className="shrink-0 font-mono text-[10px] uppercase text-neutral-900">
               {formatNoteTimestamp(item.createdAt)}
             </time>
           </div>
-        </Card>
+        </article>
       ))}
     </section>
   );

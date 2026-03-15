@@ -4,7 +4,6 @@ import { useMemo } from "react";
 
 import { CloudSun } from "@phosphor-icons/react";
 
-import { Card, CardContent } from "@/components/ui/card";
 import {
   Empty,
   EmptyDescription,
@@ -40,20 +39,26 @@ export function SomedayRoute() {
   }
 
   return (
-    <section className="flex flex-col gap-2">
+    <section className="flex flex-col gap-4">
       {items.map((item) => (
-        <Card key={item.id} size="sm">
-          <CardContent>
-            <p className="whitespace-pre-wrap text-xs leading-relaxed text-foreground">
-              {item.body}
-            </p>
-          </CardContent>
-          <div className="px-4 pb-1 text-right">
-            <time className="font-mono text-[10px] text-muted-foreground">
+        <article
+          key={item.id}
+          className="border-b border-border pb-4 last:border-b-0 last:pb-0"
+        >
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
+            <div className="space-y-2">
+              <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground">
+                {item.body}
+              </p>
+              <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+                parked for later
+              </p>
+            </div>
+            <time className="shrink-0 font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
               {formatNoteTimestamp(item.createdAt)}
             </time>
           </div>
-        </Card>
+        </article>
       ))}
     </section>
   );

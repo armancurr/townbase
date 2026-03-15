@@ -1,4 +1,5 @@
-import { NotesProvider, NotesShell } from "@/features/notes";
+import { NotesProvider } from "@/features/notes/components/notes-provider";
+import { NotesShell } from "@/features/notes/components/notes-shell";
 
 export default function NotesLayout({
   children,

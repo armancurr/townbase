@@ -1,110 +1,110 @@
 "use client";
 
+import { cn } from "@/lib/utils";
+import {
+  BookOpenText,
+  PencilSimpleIcon,
+  CheckFatIcon,
+  NoteBlankIcon,
+  HourglassIcon,
+} from "@phosphor-icons/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  CirclesThree,
-  ListChecks,
-  NotePencil,
-  Tray,
-} from "@phosphor-icons/react";
-
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
-import { cn } from "@/lib/utils";
-
-import { SECTION_COPY } from "../constants";
-import { getSectionCounts } from "../selectors";
 import type { NotesSection } from "../types";
 import { NotesCapture } from "./notes-capture";
 import { useNotes } from "./notes-provider";
 
 const routes = [
-  { href: "/notes/inbox", section: "inbox" as NotesSection, icon: NotePencil },
+  {
+    href: "/notes/inbox",
+    section: "inbox" as NotesSection,
+    label: "Inbox",
+    icon: NoteBlankIcon,
+  },
   {
     href: "/notes/process",
     section: "process" as NotesSection,
-    icon: CirclesThree,
+    label: "Process",
+    icon: PencilSimpleIcon,
   },
-  { href: "/notes/tasks", section: "tasks" as NotesSection, icon: ListChecks },
-  { href: "/notes/someday", section: "someday" as NotesSection, icon: Tray },
+  {
+    href: "/notes/tasks",
+    section: "tasks" as NotesSection,
+    label: "Tasks",
+    icon: CheckFatIcon,
+  },
+  {
+    href: "/notes/someday",
+    section: "someday" as NotesSection,
+    label: "Someday",
+    icon: HourglassIcon,
+  },
 ];
 
 export function NotesShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const { store } = useNotes();
-  const counts = getSectionCounts(store);
-
-  const activeSection = routes.find((r) => pathname === r.href)?.section;
+  useNotes();
 
   return (
-    <main className="min-h-screen bg-background">
-      <div className="mx-auto flex w-full max-w-3xl flex-col px-4 py-8 sm:px-6 sm:py-12">
-        {/* Header */}
-        <header className="mb-8 flex flex-col gap-6">
-          <div className="space-y-1">
-            <h1 className="font-mono text-lg font-medium tracking-tight text-foreground">
-              notes
-            </h1>
-            <p className="text-xs text-muted-foreground">
-              Capture first, then route the work into the right lane.
-            </p>
+    <main className="min-h-screen bg-stone-200">
+      <div className="mx-auto flex w-full max-w-3xl flex-col px-4 py-6 sm:px-6 sm:py-8">
+        <header className="flex flex-col gap-8">
+          <div className="flex flex-col gap-6">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div className="space-y-3">
+                <div className="flex items-center gap-3">
+                  <BookOpenText
+                    size={28}
+                    weight="fill"
+                    className="text-neutral-900"
+                  />
+                  <h1 className="font-mono text-3xl font-semibold tracking-tight text-neutral-900 sm:text-4xl">
+                    notes
+                  </h1>
+                </div>
+                <p className="max-w-lg text-sm leading-relaxed text-neutral-900">
+                  Capture loose thoughts, clear the inbox one note at a time,
+                  and keep active work moving without losing what can wait.
+                </p>
+              </div>
+            </div>
           </div>
 
           <NotesCapture />
         </header>
 
-        {/* Navigation */}
-        <nav aria-label="Notes sections" className="mb-6 flex gap-1">
-          {routes.map((route) => {
-            const Icon = route.icon;
-            const isActive = pathname === route.href;
-            const count = counts[route.section];
-            const label = SECTION_COPY[route.section].label;
+        <section className="mt-10">
+          <nav
+            aria-label="Notes sections"
+            className="flex flex-wrap gap-x-6 gap-y-4 py-4"
+          >
+            {routes.map((route) => {
+              const Icon = route.icon;
+              const isActive = pathname === route.href;
 
-            return (
-              <Button
-                key={route.href}
-                variant={isActive ? "default" : "ghost"}
-                size="sm"
-                className={cn(
-                  "gap-1.5",
-                  isActive && "pointer-events-none",
-                  !isActive && "text-muted-foreground",
-                )}
-                render={<Link href={route.href} />}
-              >
-                <Icon
-                  size={14}
-                  weight={isActive ? "fill" : "regular"}
-                  data-icon="inline-start"
-                />
-                <span>{label}</span>
-                {count > 0 && (
-                  <Badge
-                    variant={isActive ? "secondary" : "ghost"}
-                    className="ml-0.5 font-mono text-[10px]"
-                  >
-                    {count}
-                  </Badge>
-                )}
-              </Button>
-            );
-          })}
-        </nav>
+              return (
+                <Link
+                  key={route.href}
+                  href={route.href}
+                  aria-current={isActive ? "page" : undefined}
+                  className={cn(
+                    "inline-flex min-w-0 items-center gap-2 pb-2 text-xs transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
+                    isActive
+                      ? "text-foreground"
+                      : "text-muted-foreground hover:text-foreground",
+                  )}
+                >
+                  <Icon size={14} weight="fill" />
+                  <span className="font-mono text-sm uppercase">
+                    {route.label}
+                  </span>
+                </Link>
+              );
+            })}
+          </nav>
+        </section>
 
-        {/* Section description */}
-        {activeSection && (
-          <p className="mb-4 text-xs text-muted-foreground">
-            {SECTION_COPY[activeSection].description}
-          </p>
-        )}
-
-        <Separator className="mb-6" />
-
-        {/* Content */}
-        <section className="min-h-[40vh]">{children}</section>
+        <section className="min-h-[40vh] py-8">{children}</section>
       </div>
     </main>
   );

@@ -36,3 +36,18 @@ export function getSectionCounts(
     someday: store.someday.length,
   };
 }
+
+export function getNotesOverview(store: NotesStore) {
+  const activeTaskCount = store.tasks.filter(
+    (task) => task.status === "active",
+  ).length;
+  const completedTaskCount = store.tasks.length - activeTaskCount;
+
+  return {
+    inboxCount: store.inbox.length,
+    processCount: store.inbox.length,
+    activeTaskCount,
+    completedTaskCount,
+    somedayCount: store.someday.length,
+  };
+}

@@ -1,4 +1,5 @@
-import type { InboxItem, NotesSection, NotesStore } from "./types";
+import { getDescendingByTimestamp } from "./format";
+import type { InboxItem, NotesSection, NotesStore, TaskItem } from "./types";
 
 function getAscByCreatedAt<T extends { createdAt: string }>(items: T[]): T[] {
   return items.reduce<T[]>((orderedItems, item) => {
@@ -37,11 +38,23 @@ export function getSectionCounts(
   };
 }
 
+export function getActiveTasks(store: NotesStore): TaskItem[] {
+  return getDescendingByTimestamp(
+    store.tasks.filter((task) => task.status === "active"),
+    (task) => task.createdAt,
+  );
+}
+
+export function getCompletedTasks(store: NotesStore): TaskItem[] {
+  return getDescendingByTimestamp(
+    store.tasks.filter((task) => task.status === "done"),
+    (task) => task.completedAt ?? task.createdAt,
+  );
+}
+
 export function getNotesOverview(store: NotesStore) {
-  const activeTaskCount = store.tasks.filter(
-    (task) => task.status === "active",
-  ).length;
-  const completedTaskCount = store.tasks.length - activeTaskCount;
+  const activeTaskCount = getActiveTasks(store).length;
+  const completedTaskCount = getCompletedTasks(store).length;
 
   return {
     inboxCount: store.inbox.length,

@@ -2,8 +2,6 @@ import type { AsciiBlock } from "../types";
 
 export const College: AsciiBlock = [
   "                                    ",
-  "                                    ",
-  "                                    ",
   "                 /\\                ",
   "            ____/##\\____           ",
   "           /  __|  |__  \\          ",

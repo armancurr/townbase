@@ -1,5 +1,4 @@
 import { Blacksmith } from "./buildings/blacksmith";
-import { Chapel } from "./buildings/chapel";
 import { GuildHall } from "./buildings/guild-hall";
 import { MarketSquare } from "./buildings/market-square";
 import { OldForest } from "./buildings/old-forest";
@@ -23,7 +22,6 @@ const placements: Placement[] = [
   { block: GuildHall, row: 2, col: 51 },
   { block: RowHouses, row: 13, col: 3 },
   { block: MarketSquare, row: 13, col: 43 },
-  { block: Chapel, row: 25, col: 5 },
   { block: SacredGrove, row: 25, col: 52 },
 ];
 

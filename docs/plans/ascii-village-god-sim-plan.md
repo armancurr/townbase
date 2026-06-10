@@ -20,17 +20,6 @@ The world only progresses while the site is running. There is no background proc
 
 ## 2. Updated Product Direction
 
-The old version was a localStorage civilization that aged while the user was away.
-
-The new version is different:
-
-- no localStorage-only architecture
-- no offline aging
-- no "thousands of years passed while away" loop
-- no fully sentient AI for every villager by default
-- no direct command system
-- no heavy civilization-wide simulation at MVP
-
 The new experience is:
 
 - the user opens the game

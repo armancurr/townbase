@@ -1,9 +1,9 @@
-import { Blacksmith } from "./buildings/blacksmith";
-import { GuildHall } from "./buildings/guild-hall";
-import { MarketSquare } from "./buildings/market-square";
-import { OldForest } from "./buildings/old-forest";
-import { RowHouses } from "./buildings/row-houses";
-import { SacredGrove } from "./buildings/sacred-grove";
+import { Bank } from "./buildings/bank";
+import { Cafe } from "./buildings/cafe";
+import { College } from "./buildings/college";
+import { Diner } from "./buildings/diner";
+import { Hospital } from "./buildings/hospital";
+import { TownHall } from "./buildings/town-hall";
 import type { AsciiBlock } from "./types";
 
 const MAP_WIDTH = 100;
@@ -17,12 +17,12 @@ type Placement = {
 };
 
 const placements: Placement[] = [
-  { block: Blacksmith, row: 2, col: 5 },
-  { block: OldForest, row: 2, col: 27 },
-  { block: GuildHall, row: 2, col: 51 },
-  { block: RowHouses, row: 13, col: 3 },
-  { block: MarketSquare, row: 13, col: 43 },
-  { block: SacredGrove, row: 25, col: 52 },
+  { block: TownHall, row: 2, col: 5 },
+  { block: Hospital, row: 2, col: 27 },
+  { block: College, row: 2, col: 51 },
+  { block: Bank, row: 13, col: 3 },
+  { block: Cafe, row: 13, col: 43 },
+  { block: Diner, row: 25, col: 52 },
 ];
 
 function createEmptyMap() {

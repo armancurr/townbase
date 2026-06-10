@@ -1,11 +1,11 @@
 import type { AsciiBlock } from "../types";
-import { TownHall } from "./town-hall";
+import { Bank } from "./bank";
+import { Cafe } from "./cafe";
+import { College } from "./college";
+import { Diner } from "./diner";
 import { Hospital } from "./hospital";
 import { School } from "./school";
-import { College } from "./college";
-import { Bank } from "./bank";
-import { Diner } from "./diner";
-import { Cafe } from "./cafe";
+import { TownHall } from "./town-hall";
 
 type BuildingConfig = {
   name: string;

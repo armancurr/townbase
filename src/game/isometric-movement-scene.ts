@@ -1,5 +1,6 @@
 import Phaser from "phaser";
-import type { MovementSceneData } from "./movement-game-config";
+import type { CellClickAction, MovementSceneData } from "./movement-game-config";
+import type { BakedPlaceableSprite, SpriteFootprint } from "./placeable-sprite-baker";
 import { placeableSpriteKey, type PlacedTile } from "./placed-assets";
 
 const GRID_COLS = 40;
@@ -8,6 +9,7 @@ const TILE_WIDTH = 128;
 const TILE_HEIGHT = 64;
 const BG_COLOR = "#9AD872";
 const LAND_COLOR = 0x9ad872;
+const OCCUPIED_LAND_COLOR = 0xffffff;
 const GRID_LINE_COLOR = 0x000000;
 const GRID_LINE_ALPHA = 0.28;
 const CAMERA_DRAG_THRESHOLD = 4;
@@ -17,6 +19,7 @@ const ASSET_DEPTH_BASE = -1000;
 export class IsometricMovementScene extends Phaser.Scene {
   private origin = new Phaser.Math.Vector2(0, 0);
   private placedTiles: PlacedTile[] = [];
+  private landGraphics?: Phaser.GameObjects.Graphics;
   private placedAssetGroup?: Phaser.GameObjects.Group;
   private activeDragPointerId: number | null = null;
   private isCameraDragging = false;
@@ -56,6 +59,7 @@ export class IsometricMovementScene extends Phaser.Scene {
 
   setPlacedTiles(placedTiles: PlacedTile[]) {
     this.placedTiles = placedTiles;
+    this.drawLand();
     if (!this.placedAssetGroup) {
       return;
     }
@@ -67,9 +71,9 @@ export class IsometricMovementScene extends Phaser.Scene {
       return;
     }
 
-    for (const [key, canvas] of data.placeableSprites.canvases) {
+    for (const [key, sprite] of data.placeableSprites.sprites) {
       if (!this.textures.exists(key)) {
-        this.textures.addCanvas(key, canvas);
+        this.textures.addCanvas(key, sprite.canvas);
       }
     }
   }
@@ -132,6 +136,11 @@ export class IsometricMovementScene extends Phaser.Scene {
       return;
     }
 
+    const action = this.cellClickAction(pointer);
+    if (!action) {
+      return;
+    }
+
     const data = this.registry.get("movementSceneData") as
       | MovementSceneData
       | undefined;
@@ -140,7 +149,19 @@ export class IsometricMovementScene extends Phaser.Scene {
       return;
     }
 
-    data.onCellClick(cell.col, cell.row);
+    data.onCellClick(cell.col, cell.row, action);
+  }
+
+  private cellClickAction(pointer: Phaser.Input.Pointer): CellClickAction | null {
+    if (pointer.rightButtonReleased()) {
+      return "erase";
+    }
+
+    if (pointer.leftButtonReleased()) {
+      return "place";
+    }
+
+    return null;
   }
 
   private handlePointerUpOutside(pointer: Phaser.Input.Pointer) {
@@ -179,6 +200,56 @@ export class IsometricMovementScene extends Phaser.Scene {
     );
   }
 
+  private footprintStart(col: number, row: number, footprint: SpriteFootprint) {
+    return {
+      col: Math.round(col - (footprint.cols - 1) / 2),
+      row: Math.round(row - (footprint.rows - 1) / 2),
+    };
+  }
+
+  private footprintCenter(col: number, row: number, footprint: SpriteFootprint) {
+    const start = this.footprintStart(col, row, footprint);
+    return {
+      col: start.col + (footprint.cols - 1) / 2,
+      row: start.row + (footprint.rows - 1) / 2,
+    };
+  }
+
+  private assetDepth(tile: PlacedTile, sprite: BakedPlaceableSprite) {
+    const start = this.footprintStart(tile.col, tile.row, sprite.footprint);
+    return (
+      ASSET_DEPTH_BASE +
+      start.col +
+      sprite.footprint.cols - 1 +
+      start.row +
+      sprite.footprint.rows - 1
+    );
+  }
+
+  private occupiedCellKeys(data: MovementSceneData | undefined) {
+    const occupied = new Set<string>();
+    if (!data) {
+      return occupied;
+    }
+
+    for (const tile of this.placedTiles) {
+      const key = placeableSpriteKey(tile.assetId, tile.rotation);
+      const bakedSprite = data.placeableSprites.sprites.get(key);
+      if (!bakedSprite) {
+        continue;
+      }
+
+      const start = this.footprintStart(tile.col, tile.row, bakedSprite.footprint);
+      for (let offsetCol = 0; offsetCol < bakedSprite.footprint.cols; offsetCol += 1) {
+        for (let offsetRow = 0; offsetRow < bakedSprite.footprint.rows; offsetRow += 1) {
+          occupied.add(`${start.col + offsetCol}:${start.row + offsetRow}`);
+        }
+      }
+    }
+
+    return occupied;
+  }
+
   private drawPlacedAssets() {
     this.placedAssetGroup?.clear(true, true);
 
@@ -192,27 +263,40 @@ export class IsometricMovementScene extends Phaser.Scene {
     const scale = TILE_WIDTH / data.placeableSprites.diamondPx;
     for (const tile of this.placedTiles) {
       const key = placeableSpriteKey(tile.assetId, tile.rotation);
-      if (!this.textures.exists(key)) {
+      const bakedSprite = data.placeableSprites.sprites.get(key);
+      if (!bakedSprite || !this.textures.exists(key)) {
         continue;
       }
 
-      const center = this.gridToScreen(tile.col, tile.row);
+      const centerCell = this.footprintCenter(tile.col, tile.row, bakedSprite.footprint);
+      const center = this.gridToScreen(centerCell.col, centerCell.row);
       const sprite = this.add
         .image(center.x, center.y, key)
-        .setOrigin(0.5, 0.5)
+        .setOrigin(
+          bakedSprite.originX / bakedSprite.canvas.width,
+          bakedSprite.originY / bakedSprite.canvas.height,
+        )
         .setScale(scale)
-        .setDepth(ASSET_DEPTH_BASE + tile.col + tile.row);
+        .setDepth(this.assetDepth(tile, bakedSprite));
 
       this.placedAssetGroup?.add(sprite);
     }
   }
 
   private drawLand() {
-    const graphics = this.add.graphics().setDepth(LAND_DEPTH);
+    const data = this.registry.get("movementSceneData") as
+      | MovementSceneData
+      | undefined;
+    const occupied = this.occupiedCellKeys(data);
+    const graphics =
+      this.landGraphics ?? this.add.graphics().setDepth(LAND_DEPTH);
+    this.landGraphics = graphics;
+    graphics.clear();
 
-    graphics.fillStyle(LAND_COLOR, 1);
     for (let col = 0; col < GRID_COLS; col += 1) {
       for (let row = 0; row < GRID_ROWS; row += 1) {
+        const isOccupied = occupied.has(`${col}:${row}`);
+        graphics.fillStyle(isOccupied ? OCCUPIED_LAND_COLOR : LAND_COLOR, 1);
         graphics.fillPoints(this.cellCorners(col, row), true, true);
       }
     }

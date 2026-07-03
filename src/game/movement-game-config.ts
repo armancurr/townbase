@@ -3,10 +3,12 @@ import { IsometricMovementScene } from "./isometric-movement-scene";
 import type { BakedPlaceableSprites } from "./placeable-sprite-baker";
 import type { PlacedTile } from "./placed-assets";
 
+export type CellClickAction = "place" | "erase";
+
 export type MovementSceneData = {
   placedTiles: PlacedTile[];
   placeableSprites: BakedPlaceableSprites;
-  onCellClick: (col: number, row: number) => void;
+  onCellClick: (col: number, row: number, action: CellClickAction) => void;
 };
 
 export function createMovementGameConfig(
@@ -19,6 +21,7 @@ export function createMovementGameConfig(
     width: parent.clientWidth,
     height: parent.clientHeight,
     backgroundColor: "#9AD872",
+    disableContextMenu: true,
     scene: [IsometricMovementScene],
     callbacks: {
       preBoot: (game) => {

@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from "react";
+import Phaser from "phaser";
 import { CityScene } from "./city/city-scene";
+import { createMovementGameConfig } from "./game/movement-game-config";
 
 type CityStats = {
   roadTiles: number;
@@ -8,7 +10,19 @@ type CityStats = {
   cameraMode: string;
 };
 
-export function App() {
+function usePathname() {
+  const [pathname, setPathname] = useState(() => window.location.pathname);
+
+  useEffect(() => {
+    const handlePopState = () => setPathname(window.location.pathname);
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, []);
+
+  return pathname;
+}
+
+function CityRoute() {
   const sceneRef = useRef<CityScene | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [stats, setStats] = useState<CityStats>({
@@ -40,7 +54,7 @@ export function App() {
       <div ref={containerRef} className="city-viewport" />
       <section className="city-overlay" aria-label="Map status">
         <div>
-          <p className="city-kicker">Industrial District</p>
+          <p className="city-kicker">Suburban Township</p>
         </div>
         <dl className="city-status">
           <div>
@@ -66,4 +80,40 @@ export function App() {
       </section>
     </main>
   );
+}
+
+function MovementRoute() {
+  const gameRef = useRef<Phaser.Game | null>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) {
+      return;
+    }
+
+    const game = new Phaser.Game(createMovementGameConfig(container));
+    gameRef.current = game;
+
+    return () => {
+      gameRef.current = null;
+      game.destroy(true);
+    };
+  }, []);
+
+  return (
+    <main className="movement-shell">
+      <div ref={containerRef} className="movement-viewport" />
+    </main>
+  );
+}
+
+export function App() {
+  const pathname = usePathname();
+
+  if (pathname === "/city") {
+    return <CityRoute />;
+  }
+
+  return <MovementRoute />;
 }

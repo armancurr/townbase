@@ -1,6 +1,12 @@
 import * as THREE from "three";
 import { CityAssetLoader } from "./asset-loader";
-import { cityLayout, cityLotCount, cityRoadTileCount, suburbanHomeCount } from "./city-layout";
+import {
+  cityLayout,
+  cityLotCount,
+  cityMapWorldSize,
+  cityRoadTileCount,
+  suburbanHomeCount,
+} from "./city-layout";
 import { cityMaterials } from "./city-materials";
 import { RoadAssetLoader } from "./road-asset-loader";
 
@@ -16,9 +22,9 @@ type CitySceneOptions = {
 };
 
 const DEFAULT_TARGET = new THREE.Vector3(0, 0, 0);
-const DEFAULT_ZOOM = 11;
+const DEFAULT_ZOOM = 6.8;
 const CAMERA_DIRECTION = new THREE.Vector3(1, 1.05, 1).normalize();
-const CAMERA_DISTANCE = 150;
+const CAMERA_DISTANCE = 230;
 const ROAD_TILE_SIZE = 8;
 
 export class CityScene {
@@ -52,7 +58,7 @@ export class CityScene {
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     this.renderer.domElement.className = "city-canvas";
-    this.renderer.domElement.setAttribute("aria-label", "Industrial isometric city map");
+    this.renderer.domElement.setAttribute("aria-label", "Suburban township isometric city map");
 
     container.appendChild(this.renderer.domElement);
 
@@ -85,7 +91,7 @@ export class CityScene {
 
   private setupScene() {
     this.scene.background = new THREE.Color("#a9bdc1");
-    this.scene.fog = new THREE.Fog("#a9bdc1", 145, 300);
+    this.scene.fog = new THREE.Fog("#a9bdc1", 220, 430);
 
     const hemi = new THREE.HemisphereLight("#f7fff0", "#5e6f78", 1.65);
     this.scene.add(hemi);
@@ -94,10 +100,10 @@ export class CityScene {
     sun.position.set(-80, 130, 45);
     sun.castShadow = true;
     sun.shadow.mapSize.set(2048, 2048);
-    sun.shadow.camera.left = -120;
-    sun.shadow.camera.right = 120;
-    sun.shadow.camera.top = 120;
-    sun.shadow.camera.bottom = -120;
+    sun.shadow.camera.left = -150;
+    sun.shadow.camera.right = 150;
+    sun.shadow.camera.top = 150;
+    sun.shadow.camera.bottom = -150;
     sun.shadow.camera.near = 1;
     sun.shadow.camera.far = 260;
     this.scene.add(sun);
@@ -111,7 +117,10 @@ export class CityScene {
   }
 
   private addGround() {
-    const ground = new THREE.Mesh(new THREE.PlaneGeometry(190, 170), cityMaterials.ground);
+    const ground = new THREE.Mesh(
+      new THREE.PlaneGeometry(cityMapWorldSize.width, cityMapWorldSize.depth),
+      cityMaterials.ground,
+    );
     ground.rotation.x = -Math.PI / 2;
     ground.receiveShadow = true;
     this.scene.add(ground);
@@ -217,7 +226,7 @@ export class CityScene {
   private handleWheel = (event: WheelEvent) => {
     event.preventDefault();
     const zoomDelta = event.deltaY > 0 ? 0.9 : 1.1;
-    this.zoom = THREE.MathUtils.clamp(this.zoom * zoomDelta, 6, 22);
+    this.zoom = THREE.MathUtils.clamp(this.zoom * zoomDelta, 4.8, 22);
     this.updateCamera();
   };
 

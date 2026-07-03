@@ -29,6 +29,15 @@ const suburbanAssetModules = import.meta.glob(
   },
 ) as Record<string, string>;
 
+const commercialAssetModules = import.meta.glob(
+  "../../assets/kenney_city-kit-commercial_2.1/Models/GLB format/*.glb",
+  {
+    query: "?url",
+    import: "default",
+    eager: true,
+  },
+) as Record<string, string>;
+
 const textureModules = import.meta.glob(
   "../../assets/kenney_city-kit-industrial_1.0/Models/Textures/*.png",
   {
@@ -47,6 +56,10 @@ const packTextureUrls = {
     "../../assets/kenney_city-kit-suburban_20/Models/GLB format/Textures/colormap.png",
     import.meta.url,
   ).href,
+  commercial: new URL(
+    "../../assets/kenney_city-kit-commercial_2.1/Models/GLB format/Textures/colormap.png",
+    import.meta.url,
+  ).href,
 } satisfies Record<AssetPack, string>;
 
 const assetUrls = new Map<string, string>();
@@ -63,6 +76,13 @@ for (const [path, url] of Object.entries(suburbanAssetModules)) {
   const fileName = path.split("/").pop()?.replace(".glb", "") as CityAssetKey | undefined;
   if (fileName) {
     assetUrls.set(assetCacheKey("suburban", fileName), url);
+  }
+}
+
+for (const [path, url] of Object.entries(commercialAssetModules)) {
+  const fileName = path.split("/").pop()?.replace(".glb", "") as CityAssetKey | undefined;
+  if (fileName) {
+    assetUrls.set(assetCacheKey("commercial", fileName), url);
   }
 }
 
@@ -97,6 +117,7 @@ export class CityAssetLoader {
   private readonly loaders = {
     industrial: new GLTFLoader(createLoadingManager("industrial")),
     suburban: new GLTFLoader(createLoadingManager("suburban")),
+    commercial: new GLTFLoader(createLoadingManager("commercial")),
   } satisfies Record<AssetPack, GLTFLoader>;
   private readonly textureLoader = new THREE.TextureLoader();
   private readonly assets = new Map<string, Promise<LoadedAsset>>();

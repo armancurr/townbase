@@ -12,64 +12,23 @@ const roadTextureUrl = new URL(
   import.meta.url,
 ).href;
 
-const roadAssetUrls = {
-  "road-straight": new URL(
-    "../../assets/kenney_city-kit-roads/Models/GLB format/road-straight.glb",
-    import.meta.url,
-  ).href,
-  "road-straight-half": new URL(
-    "../../assets/kenney_city-kit-roads/Models/GLB format/road-straight-half.glb",
-    import.meta.url,
-  ).href,
-  "road-intersection": new URL(
-    "../../assets/kenney_city-kit-roads/Models/GLB format/road-intersection.glb",
-    import.meta.url,
-  ).href,
-  "road-crossroad": new URL(
-    "../../assets/kenney_city-kit-roads/Models/GLB format/road-crossroad.glb",
-    import.meta.url,
-  ).href,
-  "road-curve": new URL(
-    "../../assets/kenney_city-kit-roads/Models/GLB format/road-curve.glb",
-    import.meta.url,
-  ).href,
-  "road-bend": new URL(
-    "../../assets/kenney_city-kit-roads/Models/GLB format/road-bend.glb",
-    import.meta.url,
-  ).href,
-  "road-square": new URL(
-    "../../assets/kenney_city-kit-roads/Models/GLB format/road-square.glb",
-    import.meta.url,
-  ).href,
-  "road-end": new URL(
-    "../../assets/kenney_city-kit-roads/Models/GLB format/road-end.glb",
-    import.meta.url,
-  ).href,
-  "road-roundabout": new URL(
-    "../../assets/kenney_city-kit-roads/Models/GLB format/road-roundabout.glb",
-    import.meta.url,
-  ).href,
-  "road-side": new URL(
-    "../../assets/kenney_city-kit-roads/Models/GLB format/road-side.glb",
-    import.meta.url,
-  ).href,
-  "road-side-entry": new URL(
-    "../../assets/kenney_city-kit-roads/Models/GLB format/road-side-entry.glb",
-    import.meta.url,
-  ).href,
-  "road-side-exit": new URL(
-    "../../assets/kenney_city-kit-roads/Models/GLB format/road-side-exit.glb",
-    import.meta.url,
-  ).href,
-  "road-driveway-single": new URL(
-    "../../assets/kenney_city-kit-roads/Models/GLB format/road-driveway-single.glb",
-    import.meta.url,
-  ).href,
-  "road-driveway-double": new URL(
-    "../../assets/kenney_city-kit-roads/Models/GLB format/road-driveway-double.glb",
-    import.meta.url,
-  ).href,
-} satisfies Record<RoadAssetKey, string>;
+const roadAssetModules = import.meta.glob(
+  "../../assets/kenney_city-kit-roads/Models/GLB format/*.glb",
+  {
+    query: "?url",
+    import: "default",
+    eager: true,
+  },
+) as Record<string, string>;
+
+const roadAssetUrls = new Map<RoadAssetKey, string>();
+
+for (const [path, url] of Object.entries(roadAssetModules)) {
+  const fileName = path.split("/").pop()?.replace(".glb", "") as RoadAssetKey | undefined;
+  if (fileName) {
+    roadAssetUrls.set(fileName, url);
+  }
+}
 
 function createRoadLoadingManager() {
   const manager = new THREE.LoadingManager();
@@ -116,7 +75,10 @@ export class RoadAssetLoader {
       return cached;
     }
 
-    const url = roadAssetUrls[key];
+    const url = roadAssetUrls.get(key);
+    if (!url) {
+      throw new Error(`Missing road asset: ${key}`);
+    }
 
     const request = this.loader.loadAsync(url).then((gltf) => ({
       key,

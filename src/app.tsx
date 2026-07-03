@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import Phaser from "phaser";
 import { CityScene } from "./city/city-scene";
 import { createMovementGameConfig } from "./game/movement-game-config";
+import { roadLayout } from "./game/road-layout";
+import { bakeRoadSprites } from "./game/road-sprite-baker";
 
 type CityStats = {
   roadTiles: number;
@@ -92,12 +94,29 @@ function MovementRoute() {
       return;
     }
 
-    const game = new Phaser.Game(createMovementGameConfig(container));
-    gameRef.current = game;
+    let disposed = false;
+
+    // Bake the glb road models into crisp sprite canvases before booting the
+    // Phaser scene, then pass them in via the game config so the scene can
+    // register them as textures synchronously.
+    void bakeRoadSprites(roadLayout).then((baked) => {
+      if (disposed) {
+        return;
+      }
+
+      const game = new Phaser.Game(
+        createMovementGameConfig(container, {
+          roadLayout,
+          roadSprites: baked,
+        }),
+      );
+      gameRef.current = game;
+    });
 
     return () => {
+      disposed = true;
+      gameRef.current?.destroy(true);
       gameRef.current = null;
-      game.destroy(true);
     };
   }, []);
 

@@ -1,4 +1,6 @@
 import Phaser from "phaser";
+import type { MovementSceneData } from "./movement-game-config";
+import { roadSpriteKey } from "./road-layout";
 
 const CHARACTER_URL = new URL(
   "../../assets/kenney_blocky-characters_20/Previews/character-a.png",
@@ -25,6 +27,10 @@ const MOVE_DURATION = 200;
 const BLOCK_FILL_COLOR = 0xffffff;
 const BLOCK_FILL_ALPHA = 0.16;
 const BLOCK_HOVER_ALPHA = 0.32;
+
+// Roads render in a depth band well below the hover cells (depth 9) and the
+// character (depth 10) so the player and highlighted cells always sit on top.
+const ROAD_DEPTH_BASE = -1000;
 
 type GridDirection = "up" | "down" | "left" | "right";
 
@@ -78,6 +84,7 @@ export class IsometricMovementScene extends Phaser.Scene {
     );
 
     this.drawLand();
+    this.drawRoads();
 
     const start = this.gridToScreen(this.gridCol, this.gridRow);
     this.character = this.add
@@ -222,8 +229,52 @@ export class IsometricMovementScene extends Phaser.Scene {
     );
   }
 
+  private drawRoads() {
+    const data = this.registry.get("movementSceneData") as
+      | MovementSceneData
+      | undefined;
+    if (!data) {
+      return;
+    }
+
+    const { roadLayout, roadSprites } = data;
+
+    // Register each baked canvas as a Phaser texture (once).
+    for (const [key, canvas] of roadSprites.canvases) {
+      if (!this.textures.exists(key)) {
+        this.textures.addCanvas(key, canvas);
+      }
+    }
+
+    // Baked diamonds are larger than the on-screen cell for crispness; scale
+    // down so the tile footprint matches the grid cell exactly.
+    const scale = TILE_WIDTH / roadSprites.diamondPx;
+
+    for (const tile of roadLayout) {
+      const key = roadSpriteKey(tile.asset, tile.rotation ?? 0);
+      if (!this.textures.exists(key)) {
+        continue;
+      }
+
+      const center = this.gridToScreen(tile.col, tile.row);
+      this.add
+        .image(center.x, center.y, key)
+        // The footprint centre is baked at the canvas centre, so origin
+        // (0.5, 0.5) seats the tile flush in the diamond while raised elements
+        // extend upward.
+        .setOrigin(0.5, 0.5)
+        .setScale(scale)
+        // Keep roads in a depth band beneath the hover cells (depth 9) and the
+        // character (depth 10) so the player walks over them, while still
+        // sorting roads among themselves by grid distance.
+        .setDepth(ROAD_DEPTH_BASE + tile.col + tile.row);
+    }
+  }
+
   private drawLand() {
     const graphics = this.add.graphics();
+    // Land sits beneath the road band so baked road tiles render on top of it.
+    graphics.setDepth(ROAD_DEPTH_BASE - 1000);
 
     // Solid land fill - one diamond per cell, all in the same flat color.
     graphics.fillStyle(LAND_COLOR, 1);

@@ -1,7 +1,7 @@
 import Phaser from "phaser";
 import { IsometricMovementScene } from "./isometric-movement-scene";
-import type { BakedPlaceableSprites } from "./placeable-sprite-baker";
-import type { PlacedTile } from "./placed-assets";
+import type { BakedPlaceableSprite, BakedPlaceableSprites } from "./placeable-sprite-baker";
+import type { PlacedTile, TileRotation } from "./placed-assets";
 
 export type CellClickAction = "place" | "erase";
 
@@ -13,6 +13,7 @@ export type PlacementPreview = {
 export type MovementSceneData = {
   placedTiles: PlacedTile[];
   placeableSprites: BakedPlaceableSprites;
+  playerSprites: Map<TileRotation, BakedPlaceableSprite>;
   onCellClick: (col: number, row: number, action: CellClickAction) => void;
   getPlacementPreview: (col: number, row: number) => PlacementPreview | null;
 };

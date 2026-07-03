@@ -13,10 +13,28 @@ import {
   type TileRotation,
 } from "./game/placed-assets";
 
+const playerModelUrl = new URL(
+  "../assets/kenney_blocky-characters_20/Models/GLB format/character-a.glb",
+  import.meta.url,
+).href;
+const playerPreviewUrl = new URL(
+  "../assets/kenney_blocky-characters_20/Previews/character-a.png",
+  import.meta.url,
+).href;
+
 const PLACED_TILES_STORAGE_KEY = "bystanderland:placed-tiles:v1";
 const GRID_COLS = 40;
 const GRID_ROWS = 40;
 const DEFAULT_TILE_ROTATION: TileRotation = 180;
+const PLAYER_ROTATIONS: TileRotation[] = [0, 90, 180, 270];
+const PLAYER_ASSET: PlaceableAsset = {
+  id: "characters:character-a",
+  label: "Character A",
+  category: "building",
+  pack: "characters",
+  previewUrl: playerPreviewUrl,
+  modelUrl: playerModelUrl,
+};
 
 function isTileRotation(value: unknown): value is TileRotation {
   return value === 0 || value === 90 || value === 180 || value === 270;
@@ -257,7 +275,14 @@ function MovementRoute() {
       });
     }
 
-    void ensurePlaceableSprites(store, Array.from(initialRequests.values())).then(() => {
+    void Promise.all([
+      ensurePlaceableSprites(store, Array.from(initialRequests.values())),
+      Promise.all(
+        PLAYER_ROTATIONS.map(
+          async (rotation) => [rotation, await getPlaceableSprite(PLAYER_ASSET, rotation)] as const,
+        ),
+      ),
+    ]).then(([, playerSprites]) => {
       if (disposed) {
         return;
       }
@@ -266,6 +291,7 @@ function MovementRoute() {
         createMovementGameConfig(container, {
           placedTiles,
           placeableSprites: store,
+          playerSprites: new Map(playerSprites),
           getPlacementPreview: (col, row) => {
             if (toolRef.current !== "asset") {
               return null;

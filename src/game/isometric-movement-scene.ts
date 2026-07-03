@@ -1,7 +1,12 @@
 import Phaser from "phaser";
 import type { CellClickAction, MovementSceneData } from "./movement-game-config";
 import type { BakedPlaceableSprite, SpriteFootprint } from "./placeable-sprite-baker";
-import { placeableSpriteKey, type PlacedTile } from "./placed-assets";
+import {
+  placeableAssetsById,
+  placeableSpriteKey,
+  type PlacedTile,
+  type TileRotation,
+} from "./placed-assets";
 
 const GRID_COLS = 40;
 const GRID_ROWS = 40;
@@ -21,6 +26,11 @@ const CAMERA_DRAG_THRESHOLD = 4;
 const LAND_DEPTH = -3000;
 const PLACEMENT_PREVIEW_DEPTH = -2500;
 const ASSET_DEPTH_BASE = -1000;
+const PLAYER_TEXTURE_KEY = "player-character";
+const PLAYER_START_CELL = { col: 20, row: 20 };
+const PLAYER_MOVE_MS = 300;
+const PLAYER_SCALE = 0.1;
+const DEFAULT_PLAYER_ROTATION: TileRotation = 180;
 
 export class IsometricMovementScene extends Phaser.Scene {
   private origin = new Phaser.Math.Vector2(0, 0);
@@ -33,6 +43,10 @@ export class IsometricMovementScene extends Phaser.Scene {
   private isCameraDragging = false;
   private dragStart = new Phaser.Math.Vector2(0, 0);
   private lastDragPointer = new Phaser.Math.Vector2(0, 0);
+  private playerCell = { ...PLAYER_START_CELL };
+  private playerRotation: TileRotation = DEFAULT_PLAYER_ROTATION;
+  private playerSprite?: Phaser.GameObjects.Image;
+  private playerTween?: Phaser.Tweens.Tween;
 
   constructor() {
     super("isometric-movement-scene");
@@ -56,11 +70,14 @@ export class IsometricMovementScene extends Phaser.Scene {
 
     this.drawLand();
     this.registerPlaceableTextures(data);
+    this.registerPlayerTexture(data);
     this.placedTiles = data?.placedTiles ?? [];
     this.placedAssetGroup = this.add.group();
     this.drawPlacedAssets();
+    this.createPlayer();
     this.cameras.main.centerOn(this.origin.x, this.origin.y + worldHeight * 0.35);
     this.createPointerControls();
+    this.createKeyboardControls();
   }
 
   setPlacedTiles(placedTiles: PlacedTile[]) {
@@ -95,12 +112,81 @@ export class IsometricMovementScene extends Phaser.Scene {
     }
   }
 
+  private registerPlayerTexture(data: MovementSceneData | undefined) {
+    if (!data) {
+      return;
+    }
+
+    for (const [rotation, sprite] of data.playerSprites) {
+      const key = this.playerTextureKey(rotation as TileRotation);
+      if (!this.textures.exists(key)) {
+        this.textures.addCanvas(key, sprite.canvas);
+      }
+    }
+  }
+
   private createPointerControls() {
     this.input.on("pointerdown", this.handlePointerDown, this);
     this.input.on("pointermove", this.handlePointerMove, this);
     this.input.on("pointerup", this.handlePointerUp, this);
     this.input.on("pointerupoutside", this.handlePointerUpOutside, this);
     this.input.on("gameout", this.clearPlacementPreview, this);
+  }
+
+  private createKeyboardControls() {
+    this.input.keyboard?.on("keydown", (event: KeyboardEvent) => {
+      if (event.repeat) {
+        return;
+      }
+
+      const direction = this.keyDirection(event.key);
+      if (!direction) {
+        return;
+      }
+
+      event.preventDefault();
+      this.movePlayerBy(direction.col, direction.row);
+    });
+  }
+
+  private keyDirection(key: string) {
+    if (key === "ArrowUp" || key.toLowerCase() === "w") {
+      return { col: 0, row: -1 };
+    }
+
+    if (key === "ArrowDown" || key.toLowerCase() === "s") {
+      return { col: 0, row: 1 };
+    }
+
+    if (key === "ArrowLeft" || key.toLowerCase() === "a") {
+      return { col: -1, row: 0 };
+    }
+
+    if (key === "ArrowRight" || key.toLowerCase() === "d") {
+      return { col: 1, row: 0 };
+    }
+
+    return null;
+  }
+
+  private directionToRotation(deltaCol: number, deltaRow: number): TileRotation {
+    if (deltaRow < 0) {
+      return 180;
+    }
+
+    if (deltaCol > 0) {
+      return 90;
+    }
+
+    if (deltaRow > 0) {
+      return 0;
+    }
+
+    return 270;
+  }
+
+  private playerTextureKey(rotation: TileRotation) {
+    return `${PLAYER_TEXTURE_KEY}@${rotation}`;
   }
 
   private handlePointerDown(pointer: Phaser.Input.Pointer) {
@@ -274,6 +360,145 @@ export class IsometricMovementScene extends Phaser.Scene {
     }
 
     return occupied;
+  }
+
+  private blockedMovementCellKeys(data: MovementSceneData | undefined) {
+    const blocked = new Set<string>();
+    if (!data) {
+      return blocked;
+    }
+
+    for (const tile of this.placedTiles) {
+      const asset = placeableAssetsById.get(tile.assetId);
+      if (asset?.category === "road") {
+        continue;
+      }
+
+      const key = placeableSpriteKey(tile.assetId, tile.rotation);
+      const bakedSprite = data.placeableSprites.sprites.get(key);
+      if (!bakedSprite) {
+        continue;
+      }
+
+      const start = this.footprintStart(tile.col, tile.row, bakedSprite.footprint);
+      for (let offsetCol = 0; offsetCol < bakedSprite.footprint.cols; offsetCol += 1) {
+        for (let offsetRow = 0; offsetRow < bakedSprite.footprint.rows; offsetRow += 1) {
+          blocked.add(`${start.col + offsetCol}:${start.row + offsetRow}`);
+        }
+      }
+    }
+
+    return blocked;
+  }
+
+  private createPlayer() {
+    const data = this.registry.get("movementSceneData") as MovementSceneData | undefined;
+    const playerSprite = data?.playerSprites.get(this.playerRotation);
+    const textureKey = this.playerTextureKey(this.playerRotation);
+    if (!data || !playerSprite || !this.textures.exists(textureKey)) {
+      return;
+    }
+
+    this.playerCell = this.firstAvailablePlayerCell(data);
+    const position = this.gridToScreen(this.playerCell.col, this.playerCell.row);
+    const scale = (TILE_WIDTH / data.placeableSprites.diamondPx) * PLAYER_SCALE;
+    this.playerSprite = this.add
+      .image(position.x, position.y, textureKey)
+      .setOrigin(
+        playerSprite.originX / playerSprite.canvas.width,
+        playerSprite.originY / playerSprite.canvas.height,
+      )
+      .setScale(scale);
+    this.updatePlayerDepth();
+  }
+
+  private firstAvailablePlayerCell(data: MovementSceneData) {
+    const blocked = this.blockedMovementCellKeys(data);
+    if (!blocked.has(`${PLAYER_START_CELL.col}:${PLAYER_START_CELL.row}`)) {
+      return { ...PLAYER_START_CELL };
+    }
+
+    for (let radius = 1; radius < Math.max(GRID_COLS, GRID_ROWS); radius += 1) {
+      for (
+        let col = PLAYER_START_CELL.col - radius;
+        col <= PLAYER_START_CELL.col + radius;
+        col += 1
+      ) {
+        for (
+          let row = PLAYER_START_CELL.row - radius;
+          row <= PLAYER_START_CELL.row + radius;
+          row += 1
+        ) {
+          if (this.isInBounds(col, row) && !blocked.has(`${col}:${row}`)) {
+            return { col, row };
+          }
+        }
+      }
+    }
+
+    return { ...PLAYER_START_CELL };
+  }
+
+  private movePlayerBy(deltaCol: number, deltaRow: number) {
+    if (this.playerTween?.isPlaying()) {
+      return;
+    }
+
+    const nextRotation = this.directionToRotation(deltaCol, deltaRow);
+    const nextCell = {
+      col: this.playerCell.col + deltaCol,
+      row: this.playerCell.row + deltaRow,
+    };
+    const data = this.registry.get("movementSceneData") as MovementSceneData | undefined;
+    if (
+      !data ||
+      !this.playerSprite ||
+      !this.isInBounds(nextCell.col, nextCell.row) ||
+      this.blockedMovementCellKeys(data).has(`${nextCell.col}:${nextCell.row}`)
+    ) {
+      return;
+    }
+
+    this.setPlayerRotation(nextRotation);
+    this.playerCell = nextCell;
+    const position = this.gridToScreen(nextCell.col, nextCell.row);
+    this.updatePlayerDepth();
+    this.playerTween = this.tweens.add({
+      targets: this.playerSprite,
+      x: position.x,
+      y: position.y,
+      duration: PLAYER_MOVE_MS,
+      ease: "Sine.easeInOut",
+      onComplete: () => {
+        this.playerTween = undefined;
+        this.updatePlayerDepth();
+      },
+    });
+  }
+
+  private updatePlayerDepth() {
+    this.playerSprite?.setDepth(ASSET_DEPTH_BASE + this.playerCell.col + this.playerCell.row + 1);
+  }
+
+  private setPlayerRotation(rotation: TileRotation) {
+    if (rotation === this.playerRotation || !this.playerSprite) {
+      return;
+    }
+
+    const data = this.registry.get("movementSceneData") as MovementSceneData | undefined;
+    const playerSprite = data?.playerSprites.get(rotation);
+    const textureKey = this.playerTextureKey(rotation);
+    if (!playerSprite || !this.textures.exists(textureKey)) {
+      return;
+    }
+
+    this.playerRotation = rotation;
+    this.playerSprite
+      .setTexture(textureKey)
+      .setOrigin(
+        playerSprite.originX / playerSprite.canvas.width,
+        playerSprite.originY / playerSprite.canvas.height,
+      );
   }
 
   private drawPlacedAssets() {

@@ -2,7 +2,13 @@ export type TileRotation = 0 | 90 | 180 | 270;
 
 export type PlaceableAssetCategory = "road" | "building" | "nature";
 
-export type AssetPack = "roads" | "commercial" | "industrial" | "suburban" | "nature";
+export type AssetPack =
+  | "roads"
+  | "commercial"
+  | "industrial"
+  | "suburban"
+  | "nature"
+  | "characters";
 
 export type PlaceableAsset = {
   id: string;
@@ -27,6 +33,7 @@ export const assetPackLabels: Record<AssetPack, string> = {
   industrial: "Industrial",
   suburban: "Suburban",
   nature: "Nature",
+  characters: "Characters",
 };
 
 export const assetPackOrder: AssetPack[] = [
@@ -45,7 +52,7 @@ export const bakedAssetPacks: AssetPack[] = ["roads", "commercial", "industrial"
 
 const emptyPreview = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==";
 
-export type BakedAssetPack = "roads" | "commercial" | "industrial" | "suburban";
+export type BakedAssetPack = "roads" | "commercial" | "industrial" | "suburban" | "characters";
 
 const modelModules = {
   roads: import.meta.glob("../../assets/kenney_city-kit-roads/Models/GLB format/*.glb", {
@@ -66,6 +73,7 @@ const modelModules = {
     import: "default",
     eager: true,
   }) as Record<string, string>,
+  characters: {} as Record<string, string>,
 } satisfies Record<BakedAssetPack, Record<string, string>>;
 
 const previewModules = {
@@ -89,6 +97,7 @@ const previewModules = {
     import: "default",
     eager: true,
   }) as Record<string, string>,
+  characters: {} as Record<string, string>,
 } satisfies Record<BakedAssetPack, Record<string, string>>;
 
 // Kenney's nature kit ships pre-rendered isometric sprites for every model,

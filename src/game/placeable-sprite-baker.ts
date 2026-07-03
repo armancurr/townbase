@@ -38,6 +38,10 @@ const textureModules = {
     "../../assets/kenney_city-kit-suburban_20/Models/GLB format/Textures/*.png",
     { query: "?url", import: "default", eager: true },
   ) as Record<string, string>,
+  characters: import.meta.glob(
+    "../../assets/kenney_blocky-characters_20/Models/GLB format/Textures/*.png",
+    { query: "?url", import: "default", eager: true },
+  ) as Record<string, string>,
 } satisfies Record<BakedAssetPack, Record<string, string>>;
 
 const CAMERA_DIRECTION = new THREE.Vector3(1, 0.8165, 1).normalize();

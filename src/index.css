@@ -1,6 +1,4 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
 :root {
   color: #f4f7f0;
@@ -114,18 +112,49 @@ input {
   width: auto;
 }
 
-.editor-toolbar__header {
+.editor-logo {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 3;
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: 10px;
+  padding: 12px;
+  font-family: "Bytesized", cursive;
+  font-size: 1.5rem;
+  color: #eef4ea;
+  background: rgba(26, 31, 28, 0.88);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 8px;
+  box-shadow: 0 20px 56px rgba(23, 33, 25, 0.28);
+  backdrop-filter: blur(12px);
+  pointer-events: auto;
+  user-select: none;
 }
 
-.editor-toolbar__header strong {
-  font-size: 1rem;
+.editor-logo a {
+  display: flex;
+  color: #eef4ea;
+  transition: color 0.15s ease;
 }
 
-.editor-toolbar__header span,
+.editor-logo a:hover {
+  color: #d9e4cd;
+}
+
+.editor-logo svg {
+  display: block;
+  width: 22px;
+  height: 22px;
+}
+
+.editor-logo__divider {
+  width: 1px;
+  height: 22px;
+  background: rgba(244, 247, 240, 0.2);
+}
+
 .editor-loading {
   color: #c8d2c0;
   font-size: 0.78rem;
@@ -147,6 +176,7 @@ input {
   border: 1px solid rgba(244, 247, 240, 0.14);
   border-radius: 6px;
   cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
 
 .editor-actions button {
@@ -166,7 +196,11 @@ input {
 }
 
 .editor-actions button:hover,
-.asset-grid button:hover,
+.asset-grid button:hover {
+  background: rgba(244, 247, 240, 0.18);
+  border-color: rgba(244, 247, 240, 0.28);
+}
+
 .editor-actions button.is-active,
 .asset-grid button.is-active {
   color: #17201d;
@@ -243,7 +277,11 @@ input {
   object-position: center;
 }
 
-.asset-grid button:hover,
+.asset-grid button:hover {
+  background: rgba(244, 247, 240, 0.22);
+  border-color: rgba(244, 247, 240, 0.35);
+}
+
 .asset-grid button.is-active {
   background: #d9e4cd;
   border-color: #eff7e5;

@@ -2,8 +2,15 @@ import { useEffect, useRef, useState } from "react";
 import Phaser from "phaser";
 import { IsometricMovementScene } from "./game/isometric-movement-scene";
 import { createMovementGameConfig } from "./game/movement-game-config";
-import { createSpriteStore, ensurePlaceableSprites, getPlaceableSprite } from "./game/sprite-cache";
-import type { BakedPlaceableSprites, SpriteFootprint } from "./game/placeable-sprite-baker";
+import {
+  createSpriteStore,
+  ensurePlaceableSprites,
+  getPlaceableSprite,
+} from "./game/sprite-cache";
+import type {
+  BakedPlaceableSprites,
+  SpriteFootprint,
+} from "./game/placeable-sprite-baker";
 import {
   placeableSpriteKey,
   placeableAssets,
@@ -90,24 +97,39 @@ function footprintCells(col: number, row: number, footprint: SpriteFootprint) {
   return cells;
 }
 
-function getPlacedTileFootprint(tile: PlacedTile, sprites: BakedPlaceableSprites): SpriteFootprint {
+function getPlacedTileFootprint(
+  tile: PlacedTile,
+  sprites: BakedPlaceableSprites,
+): SpriteFootprint {
   return (
-    sprites.sprites.get(placeableSpriteKey(tile.assetId, tile.rotation))?.footprint ?? {
+    sprites.sprites.get(placeableSpriteKey(tile.assetId, tile.rotation))
+      ?.footprint ?? {
       cols: 1,
       rows: 1,
     }
   );
 }
 
-function containsCell(tile: PlacedTile, sprites: BakedPlaceableSprites, col: number, row: number) {
-  return footprintCells(tile.col, tile.row, getPlacedTileFootprint(tile, sprites)).some(
-    (cell) => cell.col === col && cell.row === row,
-  );
+function containsCell(
+  tile: PlacedTile,
+  sprites: BakedPlaceableSprites,
+  col: number,
+  row: number,
+) {
+  return footprintCells(
+    tile.col,
+    tile.row,
+    getPlacedTileFootprint(tile, sprites),
+  ).some((cell) => cell.col === col && cell.row === row);
 }
 
 function isInBounds(cells: Array<{ col: number; row: number }>) {
   return cells.every(
-    (cell) => cell.col >= 0 && cell.col < GRID_COLS && cell.row >= 0 && cell.row < GRID_ROWS,
+    (cell) =>
+      cell.col >= 0 &&
+      cell.col < GRID_COLS &&
+      cell.row >= 0 &&
+      cell.row < GRID_ROWS,
   );
 }
 
@@ -117,9 +139,11 @@ function intersectsPlacedTile(
   sprites: BakedPlaceableSprites,
 ) {
   const occupied = new Set(
-    footprintCells(placedTile.col, placedTile.row, getPlacedTileFootprint(placedTile, sprites)).map(
-      (cell) => `${cell.col}:${cell.row}`,
-    ),
+    footprintCells(
+      placedTile.col,
+      placedTile.row,
+      getPlacedTileFootprint(placedTile, sprites),
+    ).map((cell) => `${cell.col}:${cell.row}`),
   );
 
   return cells.some((cell) => occupied.has(`${cell.col}:${cell.row}`));
@@ -140,20 +164,6 @@ function PanelIcon() {
   );
 }
 
-function RotateIcon() {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="32"
-      height="32"
-      fill="#ffffff"
-      viewBox="0 0 256 256"
-    >
-      <path d="M88,104H40a8,8,0,0,1-8-8V48a8,8,0,0,1,13.66-5.66L64,60.7a95.42,95.42,0,0,1,66-26.76h.53a95.36,95.36,0,0,1,67.07,27.33,8,8,0,0,1-11.18,11.44,79.52,79.52,0,0,0-55.89-22.77h-.45A79.48,79.48,0,0,0,75.35,72L93.66,90.34A8,8,0,0,1,88,104Zm128,48H168a8,8,0,0,0-5.66,13.66L180.65,184a79.48,79.48,0,0,1-54.72,22.09h-.45a79.52,79.52,0,0,1-55.89-22.77,8,8,0,1,0-11.18,11.44,95.36,95.36,0,0,0,67.07,27.33H126a95.42,95.42,0,0,0,66-26.76l18.36,18.36A8,8,0,0,0,224,208V160A8,8,0,0,0,216,152Z"></path>
-    </svg>
-  );
-}
-
 function RemoveIcon() {
   return (
     <svg
@@ -165,6 +175,20 @@ function RemoveIcon() {
       aria-hidden="true"
     >
       <path d="M216,40H68.53a16.12,16.12,0,0,0-13.72,7.77L9.14,123.88a8,8,0,0,0,0,8.24l45.67,76.11h0A16.11,16.11,0,0,0,68.53,216H216a16,16,0,0,0,16-16V56A16,16,0,0,0,216,40ZM165.66,146.34a8,8,0,0,1-11.32,11.32L136,139.31l-18.35,18.35a8,8,0,0,1-11.31-11.32L124.69,128l-18.35-18.34a8,8,0,1,1,11.31-11.32L136,116.69l18.34-18.35a8,8,0,0,1,11.32,11.32L147.31,128Z" />
+    </svg>
+  );
+}
+
+function RotateIcon() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="32"
+      height="32"
+      fill="#ffffff"
+      viewBox="0 0 256 256"
+    >
+      <path d="M88,104H40a8,8,0,0,1-8-8V48a8,8,0,0,1,13.66-5.66L64,60.7a95.42,95.42,0,0,1,66-26.76h.53a95.36,95.36,0,0,1,67.07,27.33,8,8,0,0,1-11.18,11.44,79.52,79.52,0,0,0-55.89-22.77h-.45A79.48,79.48,0,0,0,75.35,72L93.66,90.34A8,8,0,0,1,88,104Zm128,48H168a8,8,0,0,0-5.66,13.66L180.65,184a79.48,79.48,0,0,1-54.72,22.09h-.45a79.52,79.52,0,0,1-55.89-22.77,8,8,0,1,0-11.18,11.44,95.36,95.36,0,0,0,67.07,27.33H126a95.42,95.42,0,0,0,66-26.76l18.36,18.36A8,8,0,0,0,224,208V160A8,8,0,0,0,216,152Z"></path>
     </svg>
   );
 }
@@ -206,7 +230,9 @@ function MovementRoute() {
   const toolRef = useRef<"asset" | "erase">("asset");
   const rotationRef = useRef<TileRotation>(DEFAULT_TILE_ROTATION);
   const [placedTiles, setPlacedTiles] = useState<PlacedTile[]>(loadPlacedTiles);
-  const [selectedAssetId, setSelectedAssetId] = useState(selectedAssetIdRef.current);
+  const [selectedAssetId, setSelectedAssetId] = useState(
+    selectedAssetIdRef.current,
+  );
   const [tool, setTool] = useState<"asset" | "erase">("asset");
   const [rotation, setRotation] = useState<TileRotation>(DEFAULT_TILE_ROTATION);
   const [isBaking, setIsBaking] = useState(true);
@@ -238,7 +264,10 @@ function MovementRoute() {
     // Anything else gets baked lazily the moment the user actually places it
     // (see onCellClick below), so startup cost no longer scales with the
     // size of the asset catalog.
-    const initialRequests = new Map<string, { asset: PlaceableAsset; rotation: TileRotation }>();
+    const initialRequests = new Map<
+      string,
+      { asset: PlaceableAsset; rotation: TileRotation }
+    >();
     for (const tile of placedTiles) {
       const asset = placeableAssetsById.get(tile.assetId);
       if (!asset) {
@@ -250,7 +279,10 @@ function MovementRoute() {
       });
     }
 
-    void ensurePlaceableSprites(store, Array.from(initialRequests.values())).then(() => {
+    void ensurePlaceableSprites(
+      store,
+      Array.from(initialRequests.values()),
+    ).then(() => {
       if (disposed) {
         return;
       }
@@ -285,7 +317,9 @@ function MovementRoute() {
                 const cells = footprintCells(col, row, sprite.footprint);
                 if (
                   !isInBounds(cells) ||
-                  current.some((tile) => intersectsPlacedTile(cells, tile, store))
+                  current.some((tile) =>
+                    intersectsPlacedTile(cells, tile, store),
+                  )
                 ) {
                   return current;
                 }
@@ -325,8 +359,7 @@ function MovementRoute() {
     }
 
     const scene = game.scene.getScene("isometric-movement-scene") as
-      | IsometricMovementScene
-      | undefined;
+      IsometricMovementScene | undefined;
     scene?.setPlacedTiles(placedTiles);
   }, [placedTiles]);
 
@@ -343,53 +376,51 @@ function MovementRoute() {
     setPlacedTiles([]);
   }
 
+  const btnBase =
+    "text-[#eef4ea] bg-[rgba(244,247,240,0.1)] border border-[rgba(244,247,240,0.14)] rounded-md cursor-pointer transition-colors duration-150 hover:bg-[rgba(244,247,240,0.18)] hover:border-[rgba(244,247,240,0.28)]";
+  const editorActionBtn =
+    "grid flex-[1_1_0] place-items-center min-w-0 min-h-11 p-1.5 font-extrabold";
+  const activeOverride = "!text-[#17201d] !bg-[#d9e4cd] !border-[#eff7e5]";
+  const assetBtnBase =
+    "grid place-items-center aspect-square w-full min-w-0 min-h-0 overflow-hidden p-2 bg-[#f4f7f0] border-[rgba(23,32,29,0.22)] hover:bg-[rgba(244,247,240,0.22)] hover:border-[rgba(244,247,240,0.35)]";
+  const svgOverride = "[&_svg]:block [&_svg]:w-[22px] [&_svg]:h-[22px]";
+
   return (
-    <main className="movement-shell">
-      <div className="editor-logo">
-        <span>townbase</span>
-        <span className="editor-logo__divider" />
-        <a
-          href="https://github.com/armancurr/townbase"
-          target="_blank"
-          rel="noopener noreferrer"
-          aria-label="View source on GitHub"
-        >
-          <svg viewBox="0 0 1024 1024" fill="none" aria-hidden="true">
-            <path
-              fillRule="evenodd"
-              clipRule="evenodd"
-              d="M8 0C3.58 0 0 3.58 0 8C0 11.54 2.29 14.53 5.47 15.59C5.87 15.66 6.02 15.42 6.02 15.21C6.02 15.02 6.01 14.39 6.01 13.72C4 14.09 3.48 13.23 3.32 12.78C3.23 12.55 2.84 11.84 2.5 11.65C2.22 11.5 1.82 11.13 2.49 11.12C3.12 11.11 3.57 11.7 3.72 11.94C4.44 13.15 5.59 12.81 6.05 12.6C6.12 12.08 6.33 11.73 6.56 11.53C4.78 11.33 2.92 10.64 2.92 7.58C2.92 6.71 3.23 5.99 3.74 5.43C3.66 5.23 3.38 4.41 3.82 3.31C3.82 3.31 4.49 3.1 6.02 4.13C6.66 3.95 7.34 3.86 8.02 3.86C8.7 3.86 9.38 3.95 10.02 4.13C11.55 3.09 12.22 3.31 12.22 3.31C12.66 4.41 12.38 5.23 12.3 5.43C12.81 5.99 13.12 6.7 13.12 7.58C13.12 10.65 11.25 11.33 9.47 11.53C9.76 11.78 10.01 12.26 10.01 13.01C10.01 14.08 10 14.94 10 15.21C10 15.42 10.15 15.67 10.55 15.59C13.71 14.53 16 11.53 16 8C16 3.58 12.42 0 8 0Z"
-              transform="scale(64)"
-              fill="#eef4ea"
-            />
-          </svg>
-        </a>
-      </div>
-      <div ref={containerRef} className="movement-viewport" />
+    <main className="relative w-full h-full overflow-hidden bg-[#9cb080]">
+      <span className="absolute top-3 right-3 z-[3] p-3 font-['Bytesized'] text-2xl text-[#273338] select-none">
+        townbase
+      </span>
+      <div
+        ref={containerRef}
+        className="absolute inset-0 overflow-hidden cursor-grab active:cursor-grabbing [&_canvas]:block [&_canvas]:w-full [&_canvas]:h-full [&_canvas]:touch-none"
+      />
       {isBaking ? (
         <div
-          className="movement-loading"
+          className="absolute inset-0 z-[1] grid place-items-center content-center gap-3 text-[#f7fbf2] text-sm pointer-events-none"
           role="status"
           aria-live="polite"
           aria-label="Preparing world"
         >
-          <span className="movement-loading__spinner">
+          <span className="grid w-11 h-11 place-items-center animate-[editor-spinner-spin_0.9s_linear_infinite] motion-reduce:animate-[editor-spinner-spin_1.8s_linear_infinite] [&_svg]:block [&_svg]:w-10 [&_svg]:h-10 [&_svg]:drop-shadow-[0_2px_8px_rgba(23,32,29,0.24)]">
             <SpinnerIcon />
           </span>
           <span>Preparing world...</span>
         </div>
       ) : null}
       <aside
-        className={`editor-toolbar${isPanelOpen ? "" : " is-collapsed"}`}
+        className={`absolute top-2 bottom-2 left-2 z-[2] flex flex-col gap-3 w-[min(356px,calc(100vw-16px))] p-2.5 text-[#eef4ea] bg-[#273338] rounded-lg pointer-events-auto sm:top-3 sm:bottom-3 sm:left-3 sm:w-[min(420px,calc(100vw-24px))] sm:p-3${isPanelOpen ? "" : " !bottom-auto !w-auto"}`}
         aria-label="Asset placement tools"
       >
-        <div className="editor-actions">
+        <div
+          className={`flex gap-2 ${svgOverride}${isPanelOpen ? "" : " !w-11"}`}
+        >
           <button
             type="button"
             onClick={() => setIsPanelOpen((current) => !current)}
             title={isPanelOpen ? "Close asset panel" : "Open asset panel"}
             aria-label={isPanelOpen ? "Close asset panel" : "Open asset panel"}
             aria-expanded={isPanelOpen}
+            className={`${btnBase} ${editorActionBtn}`}
           >
             <PanelIcon />
           </button>
@@ -397,22 +428,29 @@ function MovementRoute() {
             <>
               <button
                 type="button"
+                onClick={() => setTool("erase")}
+                title="Erase"
+                aria-label="Erase"
+                className={`${btnBase} ${editorActionBtn} ${tool === "erase" ? activeOverride : ""}`}
+              >
+                <RemoveIcon />
+              </button>
+              <button
+                type="button"
                 onClick={rotateSelection}
                 title="Rotate selection"
                 aria-label="Rotate selection"
+                className={`${btnBase} ${editorActionBtn}`}
               >
                 <RotateIcon />
               </button>
               <button
                 type="button"
-                className={tool === "erase" ? "is-active" : ""}
-                onClick={() => setTool("erase")}
-                title="Erase"
-                aria-label="Erase"
+                onClick={clearMap}
+                title="Clear map"
+                aria-label="Clear map"
+                className={`${btnBase} ${editorActionBtn}`}
               >
-                <RemoveIcon />
-              </button>
-              <button type="button" onClick={clearMap} title="Clear map" aria-label="Clear map">
                 <ClearIcon />
               </button>
             </>
@@ -420,15 +458,15 @@ function MovementRoute() {
         </div>
 
         {isPanelOpen ? (
-          <div className="editor-pack-list">
-            <div className="asset-grid">
+          <div className="min-h-0 overflow-auto pr-0.5">
+            <div className="grid grid-cols-3 gap-2 items-stretch">
               {placeableAssets.map((asset) => (
                 <button
                   key={asset.id}
                   type="button"
-                  className={tool === "asset" && selectedAssetId === asset.id ? "is-active" : ""}
                   onClick={() => selectAsset(asset.id)}
                   title={asset.label}
+                  className={`${btnBase} ${assetBtnBase} ${tool === "asset" && selectedAssetId === asset.id ? activeOverride : ""} [&_img]:block [&_img]:w-auto [&_img]:h-auto [&_img]:max-w-full [&_img]:max-h-full [&_img]:min-w-0 [&_img]:min-h-0 [&_img]:object-contain [&_img]:object-center`}
                 >
                   <img src={asset.previewUrl} alt="" loading="lazy" />
                 </button>

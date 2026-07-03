@@ -6,7 +6,6 @@ import {
   type BakedPlaceableSprites,
 } from "./placeable-sprite-baker";
 import {
-  natureIsoUrl,
   placeableSpriteKey,
   type PlaceableAsset,
   type TileRotation,
@@ -15,17 +14,10 @@ import {
 // ---------------------------------------------------------------------------
 // On-demand placeable sprite resolution.
 //
-// Previously the app baked its entire asset catalog (500+ assets x 4
-// rotations) with three.js/WebGL on every page load before the game would
-// even start. That doesn't scale as more packs (suburban, nature, ...) are
-// added, so sprites are now resolved lazily:
-//
-//   - "nature" pack assets use Kenney's pre-rendered isometric PNGs directly
-//     (no GLTF/WebGL baking at all).
-//   - Every other pack is still baked from its GLB model with three.js, but
-//     only when actually needed (i.e. a placed tile references it, or the
-//     user selects/places it), and the result is cached in IndexedDB so a
-//     given browser only ever pays the render cost once, ever.
+// Sprite resolution is lazy: each (asset, rotation) is baked from its GLB
+// model with three.js only when needed (i.e. a placed tile references it,
+// or the user selects/places it), and the result is cached in IndexedDB so
+// a given browser only ever pays the render cost once, ever.
 // ---------------------------------------------------------------------------
 
 const DB_NAME = "townbase-sprite-cache";
@@ -120,35 +112,6 @@ async function canvasFromBlob(blob: Blob): Promise<HTMLCanvasElement> {
 // freshly baked or loaded from IndexedDB) it's kept here for instant reuse.
 const memoryCache = new Map<string, BakedPlaceableSprite>();
 
-async function loadImageAsCanvas(url: string): Promise<HTMLCanvasElement> {
-  const response = await fetch(url);
-  const blob = await response.blob();
-  return canvasFromBlob(blob);
-}
-
-/**
- * "nature" pack assets already ship as pre-rendered isometric PNGs, so we
- * skip GLTF/WebGL baking entirely and just load the image as a canvas.
- * Footprint/origin are approximated since we don't have the 3D bounds — most
- * nature props (plants, rocks, fences, ...) are small enough that a single
- * grid cell is a reasonable default.
- */
-async function resolveNatureSprite(
-  asset: PlaceableAsset,
-  rotation: TileRotation,
-): Promise<BakedPlaceableSprite> {
-  const assetName = asset.id.split(":").slice(1).join(":");
-  const url = natureIsoUrl(assetName, rotation) ?? asset.previewUrl;
-  const canvas = await loadImageAsCanvas(url);
-
-  return {
-    canvas,
-    originX: canvas.width / 2,
-    originY: canvas.height * 0.92,
-    footprint: { cols: 1, rows: 1 },
-  };
-}
-
 async function resolveBakedSprite(
   asset: PlaceableAsset,
   rotation: TileRotation,
@@ -183,8 +146,8 @@ async function resolveBakedSprite(
 
 /**
  * Resolves (baking or loading, as needed) a single placeable sprite, caching
- * it in-memory for the session and, for baked (non-nature) packs, in
- * IndexedDB so future sessions in this browser skip baking entirely.
+ * it in-memory for the session and in IndexedDB so future sessions in this
+ * browser skip baking entirely.
  */
 export async function getPlaceableSprite(
   asset: PlaceableAsset,
@@ -197,10 +160,7 @@ export async function getPlaceableSprite(
   }
 
   const cacheKey = `${CACHE_VERSION}:${key}`;
-  const sprite =
-    asset.pack === "nature"
-      ? await resolveNatureSprite(asset, rotation)
-      : await resolveBakedSprite(asset, rotation, cacheKey);
+  const sprite = await resolveBakedSprite(asset, rotation, cacheKey);
 
   memoryCache.set(key, sprite);
   return sprite;

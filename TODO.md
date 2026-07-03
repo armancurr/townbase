@@ -4,6 +4,6 @@ Restructure src/game/ — it's currently flat (scene, config, baker, assets, cac
 
 Add a types/ layer — if placed-assets.ts and placeable-sprite-baker.ts share shapes (asset definitions, grid coordinates, sprite metadata), consider consolidating into src/game/types.ts or src/types/ instead of letting each file redefine overlapping interfaces.
 
-Check for path aliases — review tsconfig.json and vite.config.ts for @/game/*-style aliases. If subfolders get added, relative imports will get unwieldy without them.
+Check for path aliases — review tsconfig.json and vite.config.ts for @/game/\*-style aliases. If subfolders get added, relative imports will get unwieldy without them.
 
 Consider basic CI — no .github/workflows/ currently exists. A minimal typecheck + lint step on push/PR would be cheap to add given the project already has DX tooling conventions in place.

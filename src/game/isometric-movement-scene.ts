@@ -9,7 +9,8 @@ const TILE_WIDTH = 128;
 const TILE_HEIGHT = 64;
 const BG_COLOR = "#9CB080";
 const LAND_COLOR = 0x9cb080;
-const OCCUPIED_LAND_COLOR = LAND_COLOR;
+const OCCUPIED_LAND_COLOR = 0xffffff;
+const OCCUPIED_LAND_ALPHA = 0.55;
 const GRID_LINE_COLOR = 0x000000;
 const GRID_LINE_ALPHA = 0.28;
 const CAMERA_DRAG_THRESHOLD = 4;
@@ -295,7 +296,10 @@ export class IsometricMovementScene extends Phaser.Scene {
     for (let col = 0; col < GRID_COLS; col += 1) {
       for (let row = 0; row < GRID_ROWS; row += 1) {
         const isOccupied = occupied.has(`${col}:${row}`);
-        graphics.fillStyle(isOccupied ? OCCUPIED_LAND_COLOR : LAND_COLOR, 1);
+        graphics.fillStyle(
+          isOccupied ? OCCUPIED_LAND_COLOR : LAND_COLOR,
+          isOccupied ? OCCUPIED_LAND_ALPHA : 1,
+        );
         graphics.fillPoints(this.cellCorners(col, row), true, true);
       }
     }

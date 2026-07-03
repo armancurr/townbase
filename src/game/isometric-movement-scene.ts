@@ -341,8 +341,7 @@ export class IsometricMovementScene extends Phaser.Scene {
 
   private drawPlacementPreview(cell: { col: number; row: number } | null) {
     const graphics =
-      this.placementPreviewGraphics ??
-      this.add.graphics().setDepth(PLACEMENT_PREVIEW_DEPTH);
+      this.placementPreviewGraphics ?? this.add.graphics().setDepth(PLACEMENT_PREVIEW_DEPTH);
     this.placementPreviewGraphics = graphics;
     graphics.clear();
 

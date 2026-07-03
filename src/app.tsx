@@ -388,6 +388,11 @@ function MovementRoute() {
     setTool("asset");
   }
 
+  function copyAssetSlug(event: React.MouseEvent<HTMLButtonElement>, assetId: string) {
+    event.preventDefault();
+    void navigator.clipboard?.writeText(assetId);
+  }
+
   function rotateSelection() {
     setRotation((current) => ((current + 90) % 360) as TileRotation);
   }
@@ -409,17 +414,17 @@ function MovementRoute() {
   }
 
   const btnBase =
-    "text-[#eef4ea] bg-[rgba(244,247,240,0.1)] border border-[rgba(244,247,240,0.14)] rounded-md cursor-pointer transition-colors duration-150 hover:bg-[rgba(244,247,240,0.18)] hover:border-[rgba(244,247,240,0.28)]";
+    "text-[#eef4ea] border border-transparent rounded-md cursor-pointer transition-colors duration-150";
   const editorActionBtn =
-    "grid flex-[1_1_0] place-items-center min-w-0 min-h-11 p-1.5 font-extrabold";
-  const activeOverride = "!text-[#17201d] !bg-[#d9e4cd] !border-[#eff7e5]";
+    "grid h-12 w-12 place-items-center p-3 font-extrabold bg-transparent hover:bg-[rgba(244,247,240,0.16)]";
+  const activeOverride = "!text-[#17201d] !bg-[#d9e4cd]";
   const assetBtnBase =
-    "grid place-items-center aspect-square w-full min-w-0 min-h-0 overflow-hidden p-2 bg-[#f4f7f0] border-[rgba(23,32,29,0.22)] hover:bg-[rgba(244,247,240,0.22)] hover:border-[rgba(244,247,240,0.35)]";
-  const svgOverride = "[&_svg]:block [&_svg]:w-[22px] [&_svg]:h-[22px]";
+    "grid place-items-center aspect-square w-full min-w-0 min-h-0 overflow-hidden p-2 bg-transparent hover:bg-[rgba(244,247,240,0.12)]";
+  const svgOverride = "[&_svg]:block [&_svg]:w-[18px] [&_svg]:h-[18px]";
 
   return (
     <main className="relative w-full h-full overflow-hidden bg-[#9cb080]">
-      <span className="absolute top-3 right-3 z-[3] p-3 font-['Bytesized'] text-2xl text-[#273338] select-none">
+      <span className="absolute right-3 bottom-3 z-[3] p-3 font-['Bytesized'] text-2xl text-[#273338] select-none">
         townbase
       </span>
       <div
@@ -439,63 +444,63 @@ function MovementRoute() {
           <span>Preparing world...</span>
         </div>
       ) : null}
+      <div
+        className={`absolute top-2 right-2 z-[3] flex flex-col gap-1.5 rounded-lg bg-[#273338] p-2.5 pointer-events-auto sm:top-3 sm:right-3 ${svgOverride}`}
+        aria-label="Editor actions"
+      >
+        <button
+          type="button"
+          onClick={() => setIsPanelOpen((current) => !current)}
+          title={isPanelOpen ? "Close asset panel" : "Open asset panel"}
+          aria-label={isPanelOpen ? "Close asset panel" : "Open asset panel"}
+          aria-expanded={isPanelOpen}
+          className={`${btnBase} ${editorActionBtn}`}
+        >
+          <PanelIcon />
+        </button>
+        <button
+          type="button"
+          onClick={() => setTool("erase")}
+          title="Erase"
+          aria-label="Erase"
+          className={`${btnBase} ${editorActionBtn} ${tool === "erase" ? activeOverride : ""}`}
+        >
+          <RemoveIcon />
+        </button>
+        <button
+          type="button"
+          onClick={rotateSelection}
+          title="Rotate selection"
+          aria-label="Rotate selection"
+          className={`${btnBase} ${editorActionBtn}`}
+        >
+          <RotateIcon />
+        </button>
+        <button
+          type="button"
+          onClick={clearMap}
+          title="Clear map"
+          aria-label="Clear map"
+          className={`${btnBase} ${editorActionBtn}`}
+        >
+          <ClearIcon />
+        </button>
+      </div>
       <aside
-        className={`absolute top-2 bottom-2 left-2 z-[2] flex flex-col gap-3 w-[min(356px,calc(100vw-16px))] p-2.5 text-[#eef4ea] bg-[#273338] rounded-lg pointer-events-auto sm:top-3 sm:bottom-3 sm:left-3 sm:w-[min(420px,calc(100vw-24px))] sm:p-3${isPanelOpen ? "" : " !bottom-auto !w-auto"}`}
+        className={`absolute top-2 bottom-2 left-2 z-[2] flex flex-col gap-3 w-[min(248px,calc(100vw-16px))] p-2.5 text-[#eef4ea] bg-[#273338] rounded-lg pointer-events-auto sm:top-3 sm:bottom-3 sm:left-3 sm:w-[min(300px,calc(100vw-24px))] sm:p-3${isPanelOpen ? "" : " hidden"}`}
         aria-label="Asset placement tools"
       >
-        <div className={`flex gap-2 ${svgOverride}${isPanelOpen ? "" : " !w-11"}`}>
-          <button
-            type="button"
-            onClick={() => setIsPanelOpen((current) => !current)}
-            title={isPanelOpen ? "Close asset panel" : "Open asset panel"}
-            aria-label={isPanelOpen ? "Close asset panel" : "Open asset panel"}
-            aria-expanded={isPanelOpen}
-            className={`${btnBase} ${editorActionBtn}`}
-          >
-            <PanelIcon />
-          </button>
-          {isPanelOpen ? (
-            <>
-              <button
-                type="button"
-                onClick={() => setTool("erase")}
-                title="Erase"
-                aria-label="Erase"
-                className={`${btnBase} ${editorActionBtn} ${tool === "erase" ? activeOverride : ""}`}
-              >
-                <RemoveIcon />
-              </button>
-              <button
-                type="button"
-                onClick={rotateSelection}
-                title="Rotate selection"
-                aria-label="Rotate selection"
-                className={`${btnBase} ${editorActionBtn}`}
-              >
-                <RotateIcon />
-              </button>
-              <button
-                type="button"
-                onClick={clearMap}
-                title="Clear map"
-                aria-label="Clear map"
-                className={`${btnBase} ${editorActionBtn}`}
-              >
-                <ClearIcon />
-              </button>
-            </>
-          ) : null}
-        </div>
-
         {isPanelOpen ? (
           <div className="min-h-0 overflow-auto pr-0.5 scrollbar-none">
-            <div className="grid grid-cols-3 gap-2 items-stretch">
+            <div className="grid grid-cols-2 gap-1.5 items-stretch">
               {placeableAssets.map((asset) => (
                 <button
                   key={asset.id}
                   type="button"
                   onClick={() => selectAsset(asset.id)}
-                  title={asset.label}
+                  onContextMenu={(event) => copyAssetSlug(event, asset.id)}
+                  title={asset.id}
+                  aria-label={asset.label}
                   className={`${btnBase} ${assetBtnBase} ${tool === "asset" && selectedAssetId === asset.id ? activeOverride : ""} [&_img]:block [&_img]:w-auto [&_img]:h-auto [&_img]:max-w-full [&_img]:max-h-full [&_img]:min-w-0 [&_img]:min-h-0 [&_img]:object-contain [&_img]:object-center`}
                 >
                   <img src={asset.previewUrl} alt="" loading="lazy" />

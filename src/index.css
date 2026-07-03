@@ -46,6 +46,14 @@ input {
   display: none;
 }
 
+[cmdk-overlay] {
+  position: fixed;
+  inset: 0;
+  z-index: 9;
+  background: rgba(23, 32, 29, 0.38);
+  backdrop-filter: blur(2px);
+}
+
 @keyframes editor-spinner-spin {
   to {
     transform: rotate(360deg);

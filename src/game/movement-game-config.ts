@@ -8,6 +8,7 @@ export type CellClickAction = "place" | "erase";
 export type PlacementPreview = {
   cells: Array<{ col: number; row: number }>;
   isValid: boolean;
+  intent: "place" | "remove";
 };
 
 export type MovementSceneData = {

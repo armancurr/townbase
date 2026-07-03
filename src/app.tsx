@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Command } from "cmdk";
 import Phaser from "phaser";
 import { IsometricMovementScene } from "./game/isometric-movement-scene";
 import { createMovementGameConfig } from "./game/movement-game-config";
@@ -35,6 +36,9 @@ const PLAYER_ASSET: PlaceableAsset = {
   previewUrl: playerPreviewUrl,
   modelUrl: playerModelUrl,
 };
+
+type EditorTool = "asset" | "remove";
+type CommandPage = "root" | "assets";
 
 function isTileRotation(value: unknown): value is TileRotation {
   return value === 0 || value === 90 || value === 180 || value === 270;
@@ -123,6 +127,10 @@ function containsCell(tile: PlacedTile, sprites: BakedPlaceableSprites, col: num
   );
 }
 
+function tileAtCell(tiles: PlacedTile[], sprites: BakedPlaceableSprites, col: number, row: number) {
+  return tiles.find((tile) => containsCell(tile, sprites, col, row));
+}
+
 function isInBounds(cells: Array<{ col: number; row: number }>) {
   return cells.every(
     (cell) => cell.col >= 0 && cell.col < GRID_COLS && cell.row >= 0 && cell.row < GRID_ROWS,
@@ -143,65 +151,6 @@ function intersectsPlacedTile(
   return cells.some((cell) => occupied.has(`${cell.col}:${cell.row}`));
 }
 
-function PanelIcon() {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="32"
-      height="32"
-      fill="#ffffff"
-      viewBox="0 0 256 256"
-      aria-hidden="true"
-    >
-      <path d="M216,40H40A16,16,0,0,0,24,56V200a16,16,0,0,0,16,16H216a16,16,0,0,0,16-16V56A16,16,0,0,0,216,40Zm0,160H88V56H216V200Z" />
-    </svg>
-  );
-}
-
-function RemoveIcon() {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="32"
-      height="32"
-      fill="#ffffff"
-      viewBox="0 0 256 256"
-      aria-hidden="true"
-    >
-      <path d="M216,40H68.53a16.12,16.12,0,0,0-13.72,7.77L9.14,123.88a8,8,0,0,0,0,8.24l45.67,76.11h0A16.11,16.11,0,0,0,68.53,216H216a16,16,0,0,0,16-16V56A16,16,0,0,0,216,40ZM165.66,146.34a8,8,0,0,1-11.32,11.32L136,139.31l-18.35,18.35a8,8,0,0,1-11.31-11.32L124.69,128l-18.35-18.34a8,8,0,1,1,11.31-11.32L136,116.69l18.34-18.35a8,8,0,0,1,11.32,11.32L147.31,128Z" />
-    </svg>
-  );
-}
-
-function RotateIcon() {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="32"
-      height="32"
-      fill="#ffffff"
-      viewBox="0 0 256 256"
-    >
-      <path d="M88,104H40a8,8,0,0,1-8-8V48a8,8,0,0,1,13.66-5.66L64,60.7a95.42,95.42,0,0,1,66-26.76h.53a95.36,95.36,0,0,1,67.07,27.33,8,8,0,0,1-11.18,11.44,79.52,79.52,0,0,0-55.89-22.77h-.45A79.48,79.48,0,0,0,75.35,72L93.66,90.34A8,8,0,0,1,88,104Zm128,48H168a8,8,0,0,0-5.66,13.66L180.65,184a79.48,79.48,0,0,1-54.72,22.09h-.45a79.52,79.52,0,0,1-55.89-22.77,8,8,0,1,0-11.18,11.44,95.36,95.36,0,0,0,67.07,27.33H126a95.42,95.42,0,0,0,66-26.76l18.36,18.36A8,8,0,0,0,224,208V160A8,8,0,0,0,216,152Z"></path>
-    </svg>
-  );
-}
-
-function ClearIcon() {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="32"
-      height="32"
-      fill="#ffffff"
-      viewBox="0 0 256 256"
-      aria-hidden="true"
-    >
-      <path d="M224,56a8,8,0,0,1-8,8h-8V208a16,16,0,0,1-16,16H64a16,16,0,0,1-16-16V64H40a8,8,0,0,1,0-16H216A8,8,0,0,1,224,56ZM88,32h80a8,8,0,0,0,0-16H88a8,8,0,0,0,0,16Z" />
-    </svg>
-  );
-}
-
 function SpinnerIcon() {
   return (
     <svg
@@ -217,20 +166,75 @@ function SpinnerIcon() {
   );
 }
 
+function isEditableTarget(target: EventTarget | null) {
+  if (!(target instanceof HTMLElement)) {
+    return false;
+  }
+
+  return Boolean(
+    target.closest("input, textarea, select, [contenteditable='true'], [contenteditable='']"),
+  );
+}
+
+function rotationLabel(rotation: TileRotation) {
+  switch (rotation) {
+    case 0:
+      return "North";
+    case 90:
+      return "East";
+    case 180:
+      return "South";
+    case 270:
+      return "West";
+  }
+}
+
+function nextRotation(rotation: TileRotation, direction: 1 | -1) {
+  const rotations: TileRotation[] = [0, 90, 180, 270];
+  const index = rotations.indexOf(rotation);
+  return rotations[(index + direction + rotations.length) % rotations.length];
+}
+
+function packLabel(pack: string) {
+  return pack
+    .split("-")
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+}
+
+function Shortcut({ children }: { children: string }) {
+  return (
+    <kbd className="rounded border border-[#53635b] bg-[#1d2724] px-1.5 py-0.5 text-[11px] text-[#cdd8c4]">
+      {children}
+    </kbd>
+  );
+}
+
 function MovementRoute() {
   const gameRef = useRef<Phaser.Game | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const placeableSpritesRef = useRef<BakedPlaceableSprites | null>(null);
   const selectedAssetIdRef = useRef(placeableAssets[0]?.id ?? "");
-  const toolRef = useRef<"asset" | "erase">("asset");
+  const toolRef = useRef<EditorTool>("asset");
   const rotationRef = useRef<TileRotation>(DEFAULT_TILE_ROTATION);
   const placedTilesRef = useRef<PlacedTile[]>([]);
+  const commandSearchRef = useRef<HTMLInputElement | null>(null);
   const [placedTiles, setPlacedTiles] = useState<PlacedTile[]>(loadPlacedTiles);
   const [selectedAssetId, setSelectedAssetId] = useState(selectedAssetIdRef.current);
-  const [tool, setTool] = useState<"asset" | "erase">("asset");
+  const [tool, setTool] = useState<EditorTool>("asset");
   const [rotation, setRotation] = useState<TileRotation>(DEFAULT_TILE_ROTATION);
   const [isBaking, setIsBaking] = useState(true);
-  const [isPanelOpen, setIsPanelOpen] = useState(true);
+  const [isCommandOpen, setIsCommandOpen] = useState(false);
+  const [commandPage, setCommandPage] = useState<CommandPage>("root");
+
+  const selectedAsset = placeableAssetsById.get(selectedAssetId) ?? placeableAssets[0];
+  const assetsByPack = useMemo(() => {
+    const groups = new Map<string, PlaceableAsset[]>();
+    for (const asset of placeableAssets) {
+      groups.set(asset.pack, [...(groups.get(asset.pack) ?? []), asset]);
+    }
+    return Array.from(groups);
+  }, []);
 
   useEffect(() => {
     selectedAssetIdRef.current = selectedAssetId;
@@ -258,11 +262,6 @@ function MovementRoute() {
     const store = createSpriteStore();
     placeableSpritesRef.current = store;
 
-    // Only bake/load sprites for assets that are already placed on the map
-    // (persisted from a previous session), instead of the whole catalog.
-    // Anything else gets baked lazily the moment the user actually places it
-    // (see onCellClick below), so startup cost no longer scales with the
-    // size of the asset catalog.
     const initialRequests = new Map<string, { asset: PlaceableAsset; rotation: TileRotation }>();
     for (const tile of placedTiles) {
       const asset = placeableAssetsById.get(tile.assetId);
@@ -293,8 +292,17 @@ function MovementRoute() {
           placeableSprites: store,
           playerSprites: new Map(playerSprites),
           getPlacementPreview: (col, row) => {
-            if (toolRef.current !== "asset") {
-              return null;
+            if (toolRef.current === "remove") {
+              const tile = tileAtCell(placedTilesRef.current, store, col, row);
+              if (!tile) {
+                return { cells: [{ col, row }], isValid: false, intent: "remove" };
+              }
+
+              return {
+                cells: footprintCells(tile.col, tile.row, getPlacedTileFootprint(tile, store)),
+                isValid: true,
+                intent: "remove",
+              };
             }
 
             const assetId = selectedAssetIdRef.current;
@@ -310,10 +318,11 @@ function MovementRoute() {
               isValid:
                 isInBounds(cells) &&
                 !placedTilesRef.current.some((tile) => intersectsPlacedTile(cells, tile, store)),
+              intent: "place",
             };
           },
           onCellClick: (col, row, action) => {
-            if (action === "erase" || toolRef.current === "erase") {
+            if (action === "erase" || toolRef.current === "remove") {
               setPlacedTiles((current) =>
                 current.filter((tile) => !containsCell(tile, store, col, row)),
               );
@@ -409,23 +418,101 @@ function MovementRoute() {
     scene?.setPlacedTiles(placedTiles);
   }, [placedTiles]);
 
+  useEffect(() => {
+    function handleKeyDown(event: KeyboardEvent) {
+      const key = event.key.toLowerCase();
+      const commandModifier = event.metaKey || event.ctrlKey;
+
+      if (commandModifier && key === "k") {
+        event.preventDefault();
+        openCommand("root");
+        return;
+      }
+
+      if (commandModifier && key === "b") {
+        event.preventDefault();
+        openCommand("assets");
+        return;
+      }
+
+      if (isCommandOpen || isEditableTarget(event.target)) {
+        return;
+      }
+
+      if (key === "r") {
+        event.preventDefault();
+        toggleRemoveMode();
+        return;
+      }
+
+      if (key === "q") {
+        event.preventDefault();
+        rotatePlacement(-1);
+        return;
+      }
+
+      if (key === "e") {
+        event.preventDefault();
+        rotatePlacement(1);
+      }
+    }
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isCommandOpen]);
+
   function selectAsset(assetId: string) {
     setSelectedAssetId(assetId);
     setTool("asset");
+    setIsCommandOpen(false);
   }
 
-  function copyAssetSlug(event: React.MouseEvent<HTMLButtonElement>, assetId: string) {
-    event.preventDefault();
-    void navigator.clipboard?.writeText(assetId);
+  function copySelectedAssetId() {
+    if (!selectedAsset) {
+      return;
+    }
+
+    void navigator.clipboard?.writeText(selectedAsset.id);
+    setIsCommandOpen(false);
   }
 
-  function rotateSelection() {
-    setRotation((current) => ((current + 90) % 360) as TileRotation);
+  function setPlaceModeFromCommand() {
+    setTool("asset");
+    setIsCommandOpen(false);
   }
 
-  function clearMap() {
-    setPlacedTiles([]);
+  function toggleRemoveModeFromCommand() {
+    toggleRemoveMode();
+    setIsCommandOpen(false);
   }
+
+  function rotatePlacementFromCommand(direction: 1 | -1) {
+    rotatePlacement(direction);
+    setIsCommandOpen(false);
+  }
+
+  function rotatePlacement(direction: 1 | -1) {
+    setRotation((current) => nextRotation(current, direction));
+  }
+
+  function toggleRemoveMode() {
+    setTool((current) => (current === "remove" ? "asset" : "remove"));
+  }
+
+  function openCommand(page: CommandPage) {
+    setCommandPage(page);
+    setIsCommandOpen(true);
+    window.setTimeout(() => commandSearchRef.current?.focus(), 0);
+  }
+
+  /*
+   * Clear map is intentionally hidden because it wipes all persisted local
+   * storage state. Keep this here until a safer reset flow exists.
+   *
+   * function clearMap() {
+   *   setPlacedTiles([]);
+   * }
+   */
 
   function refreshPlacementPreview() {
     const game = gameRef.current;
@@ -439,103 +526,214 @@ function MovementRoute() {
     scene?.refreshPlacementPreview();
   }
 
-  const btnBase =
-    "text-[#eef4ea] border border-transparent rounded-md cursor-pointer transition-colors duration-150";
-  const editorActionBtn =
-    "grid h-12 w-12 place-items-center p-3 font-extrabold bg-transparent hover:bg-[rgba(244,247,240,0.16)]";
-  const activeOverride = "!text-[#17201d] !bg-[#d9e4cd]";
-  const assetBtnBase =
-    "grid place-items-center aspect-square w-full min-w-0 min-h-0 overflow-hidden p-2 bg-transparent hover:bg-[rgba(244,247,240,0.12)]";
-  const svgOverride = "[&_svg]:block [&_svg]:w-[18px] [&_svg]:h-[18px]";
+  const commandItem =
+    "flex min-h-11 cursor-pointer items-center gap-3 rounded-md px-3 py-2 text-sm text-[#eef4ea] outline-none aria-selected:bg-[#d9e4cd] aria-selected:text-[#17201d] data-[selected=true]:bg-[#d9e4cd] data-[selected=true]:text-[#17201d]";
+  const commandMeta = "ml-auto flex shrink-0 items-center gap-1.5 text-xs opacity-80";
 
   return (
-    <main className="relative w-full h-full overflow-hidden bg-[#9cb080]">
-      <span className="absolute right-3 bottom-3 z-[3] p-3 font-['Bytesized'] text-2xl text-[#273338] select-none">
+    <main className="relative h-full w-full overflow-hidden bg-[#9cb080]">
+      <span className="absolute bottom-3 right-3 z-[3] p-3 font-['Bytesized'] text-2xl text-[#273338] select-none">
         townbase
       </span>
       <div
         ref={containerRef}
-        className="absolute inset-0 overflow-hidden cursor-crosshair [&_canvas]:cursor-crosshair [&_canvas]:block [&_canvas]:w-full [&_canvas]:h-full [&_canvas]:touch-none"
+        className="absolute inset-0 overflow-hidden cursor-crosshair [&_canvas]:block [&_canvas]:h-full [&_canvas]:w-full [&_canvas]:touch-none [&_canvas]:cursor-crosshair"
       />
       {isBaking ? (
         <div
-          className="absolute inset-0 z-[1] grid place-items-center content-center gap-3 text-[#f7fbf2] text-sm pointer-events-none"
+          className="absolute inset-0 z-[1] grid place-items-center content-center gap-3 text-sm text-[#f7fbf2] pointer-events-none"
           role="status"
           aria-live="polite"
           aria-label="Preparing world"
         >
-          <span className="grid w-11 h-11 place-items-center animate-[editor-spinner-spin_0.9s_linear_infinite] motion-reduce:animate-[editor-spinner-spin_1.8s_linear_infinite] [&_svg]:block [&_svg]:w-10 [&_svg]:h-10 [&_svg]:drop-shadow-[0_2px_8px_rgba(23,32,29,0.24)]">
+          <span className="grid h-11 w-11 place-items-center animate-[editor-spinner-spin_0.9s_linear_infinite] motion-reduce:animate-[editor-spinner-spin_1.8s_linear_infinite] [&_svg]:block [&_svg]:h-10 [&_svg]:w-10 [&_svg]:drop-shadow-[0_2px_8px_rgba(23,32,29,0.24)]">
             <SpinnerIcon />
           </span>
           <span>Preparing world...</span>
         </div>
       ) : null}
+
       <div
-        className={`absolute top-2 right-2 z-[3] flex flex-col gap-1.5 rounded-lg bg-[#273338] p-2.5 pointer-events-auto sm:top-3 sm:right-3 ${svgOverride}`}
-        aria-label="Editor actions"
+        className="absolute left-3 top-3 z-[3] flex max-w-[calc(100vw-24px)] flex-wrap items-center gap-2 rounded-md bg-[#273338]/92 px-3 py-2 text-xs text-[#eef4ea] shadow-[0_10px_24px_rgba(23,32,29,0.18)] backdrop-blur"
+        aria-label="Editor status"
       >
-        <button
-          type="button"
-          onClick={() => setIsPanelOpen((current) => !current)}
-          title={isPanelOpen ? "Close asset panel" : "Open asset panel"}
-          aria-label={isPanelOpen ? "Close asset panel" : "Open asset panel"}
-          aria-expanded={isPanelOpen}
-          className={`${btnBase} ${editorActionBtn}`}
-        >
-          <PanelIcon />
-        </button>
-        <button
-          type="button"
-          onClick={() => setTool("erase")}
-          title="Erase"
-          aria-label="Erase"
-          className={`${btnBase} ${editorActionBtn} ${tool === "erase" ? activeOverride : ""}`}
-        >
-          <RemoveIcon />
-        </button>
-        <button
-          type="button"
-          onClick={rotateSelection}
-          title="Rotate selection"
-          aria-label="Rotate selection"
-          className={`${btnBase} ${editorActionBtn}`}
-        >
-          <RotateIcon />
-        </button>
-        <button
-          type="button"
-          onClick={clearMap}
-          title="Clear map"
-          aria-label="Clear map"
-          className={`${btnBase} ${editorActionBtn}`}
-        >
-          <ClearIcon />
-        </button>
+        <span className="font-semibold">{tool === "remove" ? "Remove mode" : "Place mode"}</span>
+        {tool === "asset" && selectedAsset ? (
+          <>
+            <span className="h-4 w-px bg-[#53635b]" aria-hidden="true" />
+            <span className="max-w-[42vw] truncate">{selectedAsset.label}</span>
+            <span className="h-4 w-px bg-[#53635b]" aria-hidden="true" />
+            <span>Facing {rotationLabel(rotation)}</span>
+          </>
+        ) : (
+          <span className="text-[#cdd8c4]">Click an occupied tile to remove it</span>
+        )}
       </div>
-      <aside
-        className={`absolute top-2 bottom-2 left-2 z-[2] flex flex-col gap-3 w-[min(248px,calc(100vw-16px))] p-2.5 text-[#eef4ea] bg-[#273338] rounded-lg pointer-events-auto sm:top-3 sm:bottom-3 sm:left-3 sm:w-[min(300px,calc(100vw-24px))] sm:p-3${isPanelOpen ? "" : " hidden"}`}
-        aria-label="Asset placement tools"
+
+      <div className="absolute bottom-3 left-3 z-[3] flex max-w-[calc(100vw-24px)] flex-wrap items-center gap-1.5 rounded-md bg-[#273338]/88 px-2.5 py-2 text-xs text-[#cdd8c4] shadow-[0_10px_24px_rgba(23,32,29,0.16)] backdrop-blur">
+        <Shortcut>{navigator.platform.includes("Mac") ? "Cmd K" : "Ctrl K"}</Shortcut>
+        <span>Commands</span>
+        <Shortcut>{navigator.platform.includes("Mac") ? "Cmd B" : "Ctrl B"}</Shortcut>
+        <span>Assets Store</span>
+        <Shortcut>R</Shortcut>
+        <span>Remove</span>
+        <Shortcut>Q/E</Shortcut>
+        <span>Rotate</span>
+      </div>
+
+      <Command.Dialog
+        open={isCommandOpen}
+        onOpenChange={(open) => {
+          setIsCommandOpen(open);
+          if (!open) {
+            setCommandPage("root");
+          }
+        }}
+        label={commandPage === "assets" ? "Assets Store" : "Command palette"}
+        className="fixed left-1/2 top-[12vh] z-10 flex max-h-[76vh] w-[min(680px,calc(100vw-24px))] -translate-x-1/2 flex-col overflow-hidden rounded-lg border border-[#3f4e47] bg-[#273338] text-[#eef4ea] shadow-[0_28px_80px_rgba(23,32,29,0.42)]"
       >
-        {isPanelOpen ? (
-          <div className="min-h-0 overflow-auto pr-0.5 scrollbar-none">
-            <div className="grid grid-cols-2 gap-1.5 items-stretch">
-              {placeableAssets.map((asset) => (
-                <button
-                  key={asset.id}
-                  type="button"
-                  onClick={() => selectAsset(asset.id)}
-                  onContextMenu={(event) => copyAssetSlug(event, asset.id)}
-                  title={asset.id}
-                  aria-label={asset.label}
-                  className={`${btnBase} ${assetBtnBase} ${tool === "asset" && selectedAssetId === asset.id ? activeOverride : ""} [&_img]:block [&_img]:w-auto [&_img]:h-auto [&_img]:max-w-full [&_img]:max-h-full [&_img]:min-w-0 [&_img]:min-h-0 [&_img]:object-contain [&_img]:object-center`}
+        <div className="flex items-center gap-2 border-b border-[#3f4e47] px-3 py-2">
+          {commandPage === "assets" ? (
+            <button
+              type="button"
+              onClick={() => setCommandPage("root")}
+              className="rounded px-2 py-1 text-sm text-[#cdd8c4] hover:bg-[#35443d] hover:text-[#eef4ea]"
+            >
+              Back
+            </button>
+          ) : null}
+          <Command.Input
+            ref={commandSearchRef}
+            placeholder={commandPage === "assets" ? "Search assets..." : "Search commands..."}
+            className="h-11 min-w-0 flex-1 bg-transparent text-base text-[#eef4ea] outline-none placeholder:text-[#96a79d]"
+          />
+        </div>
+        <Command.List className="min-h-0 overflow-auto p-2 scrollbar-none">
+          <Command.Empty className="px-3 py-8 text-center text-sm text-[#cdd8c4]">
+            No results found.
+          </Command.Empty>
+
+          {commandPage === "root" ? (
+            <>
+              <Command.Group
+                heading="Actions"
+                className="[&_[cmdk-group-heading]]:px-3 [&_[cmdk-group-heading]]:py-2 [&_[cmdk-group-heading]]:text-xs [&_[cmdk-group-heading]]:font-semibold [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-wide [&_[cmdk-group-heading]]:text-[#96a79d]"
+              >
+                <Command.Item
+                  value="open assets store"
+                  onSelect={() => setCommandPage("assets")}
+                  className={commandItem}
                 >
-                  <img src={asset.previewUrl} alt="" loading="lazy" />
-                </button>
-              ))}
-            </div>
-          </div>
-        ) : null}
-      </aside>
+                  <span>Open Assets Store</span>
+                  <span className={commandMeta}>
+                    <Shortcut>{navigator.platform.includes("Mac") ? "Cmd B" : "Ctrl B"}</Shortcut>
+                  </span>
+                </Command.Item>
+                <Command.Item
+                  value="place mode asset placement"
+                  onSelect={setPlaceModeFromCommand}
+                  className={commandItem}
+                >
+                  <span>Place mode</span>
+                </Command.Item>
+                <Command.Item
+                  value="toggle remove mode delete asset erase"
+                  onSelect={toggleRemoveModeFromCommand}
+                  className={commandItem}
+                >
+                  <span>{tool === "remove" ? "Return to Place mode" : "Toggle Remove mode"}</span>
+                  <span className={commandMeta}>
+                    <Shortcut>R</Shortcut>
+                  </span>
+                </Command.Item>
+                <Command.Item
+                  value="rotate placement counterclockwise left"
+                  onSelect={() => rotatePlacementFromCommand(-1)}
+                  className={commandItem}
+                >
+                  <span>Rotate placement counterclockwise</span>
+                  <span className={commandMeta}>
+                    <Shortcut>Q</Shortcut>
+                  </span>
+                </Command.Item>
+                <Command.Item
+                  value="rotate placement clockwise right"
+                  onSelect={() => rotatePlacementFromCommand(1)}
+                  className={commandItem}
+                >
+                  <span>Rotate placement clockwise</span>
+                  <span className={commandMeta}>
+                    <Shortcut>E</Shortcut>
+                  </span>
+                </Command.Item>
+                <Command.Item
+                  value="copy selected asset id slug"
+                  onSelect={copySelectedAssetId}
+                  className={commandItem}
+                >
+                  <span>Copy selected asset id</span>
+                  {selectedAsset ? (
+                    <span className="ml-auto max-w-[42%] truncate text-xs opacity-80">
+                      {selectedAsset.id}
+                    </span>
+                  ) : null}
+                </Command.Item>
+              </Command.Group>
+              <Command.Group
+                heading="Current Selection"
+                className="[&_[cmdk-group-heading]]:px-3 [&_[cmdk-group-heading]]:py-2 [&_[cmdk-group-heading]]:text-xs [&_[cmdk-group-heading]]:font-semibold [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-wide [&_[cmdk-group-heading]]:text-[#96a79d]"
+              >
+                {selectedAsset ? (
+                  <Command.Item
+                    value={`${selectedAsset.label} ${selectedAsset.id}`}
+                    onSelect={() => setCommandPage("assets")}
+                    className={commandItem}
+                  >
+                    <img
+                      src={selectedAsset.previewUrl}
+                      alt=""
+                      className="h-10 w-10 shrink-0 object-contain"
+                    />
+                    <span className="min-w-0 flex-1 truncate">{selectedAsset.label}</span>
+                    <span className="text-xs opacity-80">Facing {rotationLabel(rotation)}</span>
+                  </Command.Item>
+                ) : null}
+              </Command.Group>
+            </>
+          ) : (
+            assetsByPack.map(([pack, assets]) => (
+              <Command.Group
+                key={pack}
+                heading={packLabel(pack)}
+                className="[&_[cmdk-group-heading]]:px-3 [&_[cmdk-group-heading]]:py-2 [&_[cmdk-group-heading]]:text-xs [&_[cmdk-group-heading]]:font-semibold [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-wide [&_[cmdk-group-heading]]:text-[#96a79d]"
+              >
+                {assets.map((asset) => (
+                  <Command.Item
+                    key={asset.id}
+                    value={`${asset.label} ${asset.id} ${asset.category} ${asset.pack}`}
+                    onSelect={() => selectAsset(asset.id)}
+                    className={commandItem}
+                  >
+                    <img
+                      src={asset.previewUrl}
+                      alt=""
+                      className="h-12 w-12 shrink-0 object-contain"
+                      loading="lazy"
+                    />
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate">{asset.label}</span>
+                      <span className="block truncate text-xs opacity-75">{asset.id}</span>
+                    </span>
+                    {selectedAssetId === asset.id ? (
+                      <span className="text-xs font-semibold">Selected</span>
+                    ) : null}
+                  </Command.Item>
+                ))}
+              </Command.Group>
+            ))
+          )}
+        </Command.List>
+      </Command.Dialog>
     </main>
   );
 }

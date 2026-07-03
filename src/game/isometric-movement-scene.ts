@@ -20,6 +20,7 @@ const GRID_LINE_COLOR = 0x000000;
 const GRID_LINE_ALPHA = 0.28;
 const VALID_PREVIEW_COLOR = 0x6ee07f;
 const INVALID_PREVIEW_COLOR = 0xef4c42;
+const REMOVE_PREVIEW_COLOR = 0xf2b84b;
 const PREVIEW_FILL_ALPHA = 0.34;
 const PREVIEW_LINE_ALPHA = 0.9;
 const CAMERA_DRAG_THRESHOLD = 4;
@@ -580,7 +581,12 @@ export class IsometricMovementScene extends Phaser.Scene {
       return;
     }
 
-    const color = preview.isValid ? VALID_PREVIEW_COLOR : INVALID_PREVIEW_COLOR;
+    const color =
+      preview.intent === "remove" && preview.isValid
+        ? REMOVE_PREVIEW_COLOR
+        : preview.isValid
+          ? VALID_PREVIEW_COLOR
+          : INVALID_PREVIEW_COLOR;
     graphics.fillStyle(color, PREVIEW_FILL_ALPHA);
     for (const previewCell of preview.cells) {
       graphics.fillPoints(this.cellCorners(previewCell.col, previewCell.row), true, true);

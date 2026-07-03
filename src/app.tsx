@@ -2,8 +2,9 @@ import { useEffect, useRef, useState } from "react";
 import { CityScene } from "./city/city-scene";
 
 type CityStats = {
-  loadedAssets: number;
-  totalObjects: number;
+  roadTiles: number;
+  blocks: number;
+  homes: number;
   cameraMode: string;
 };
 
@@ -11,8 +12,9 @@ export function App() {
   const sceneRef = useRef<CityScene | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [stats, setStats] = useState<CityStats>({
-    loadedAssets: 0,
-    totalObjects: 0,
+    roadTiles: 0,
+    blocks: 0,
+    homes: 0,
     cameraMode: "Orthographic",
   });
 
@@ -39,14 +41,19 @@ export function App() {
       <section className="city-overlay" aria-label="Map status">
         <div>
           <p className="city-kicker">Industrial District</p>
-          <h1>Bystanderland</h1>
         </div>
         <dl className="city-status">
           <div>
-            <dt>Assets</dt>
-            <dd>
-              {stats.loadedAssets}/{stats.totalObjects}
-            </dd>
+            <dt>Road tiles</dt>
+            <dd>{stats.roadTiles}</dd>
+          </div>
+          <div>
+            <dt>Blocks</dt>
+            <dd>{stats.blocks}</dd>
+          </div>
+          <div>
+            <dt>Homes</dt>
+            <dd>{stats.homes}</dd>
           </div>
           <div>
             <dt>Camera</dt>

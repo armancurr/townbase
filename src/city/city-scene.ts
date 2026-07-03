@@ -1,11 +1,13 @@
 import * as THREE from "three";
 import { CityAssetLoader } from "./asset-loader";
-import { cityLayout, cityObjectCount, type RoadDefinition } from "./city-layout";
+import { cityLayout, cityLotCount, cityRoadTileCount, suburbanHomeCount } from "./city-layout";
 import { cityMaterials } from "./city-materials";
+import { RoadAssetLoader } from "./road-asset-loader";
 
 type CitySceneStats = {
-  loadedAssets: number;
-  totalObjects: number;
+  roadTiles: number;
+  blocks: number;
+  homes: number;
   cameraMode: string;
 };
 
@@ -17,12 +19,14 @@ const DEFAULT_TARGET = new THREE.Vector3(0, 0, 0);
 const DEFAULT_ZOOM = 11;
 const CAMERA_DIRECTION = new THREE.Vector3(1, 1.05, 1).normalize();
 const CAMERA_DISTANCE = 150;
+const ROAD_TILE_SIZE = 8;
 
 export class CityScene {
   private readonly scene = new THREE.Scene();
   private readonly renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
-  private readonly camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 600);
+  private readonly roadAssetLoader = new RoadAssetLoader();
   private readonly assetLoader = new CityAssetLoader();
+  private readonly camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 600);
   private readonly target = DEFAULT_TARGET.clone();
   private readonly pointer = new THREE.Vector2();
   private readonly lastPointer = new THREE.Vector2();
@@ -36,7 +40,6 @@ export class CityScene {
   private zoom = DEFAULT_ZOOM;
   private isDragging = false;
   private disposed = false;
-  private visibleObjectCount = 0;
 
   constructor(
     private readonly container: HTMLElement,
@@ -57,7 +60,6 @@ export class CityScene {
     this.resize();
     this.resetCamera();
     this.attachEvents();
-    void this.populateAssets();
     this.animate();
     this.emitStats();
   }
@@ -104,7 +106,8 @@ export class CityScene {
 
     this.addGround();
     this.addLots();
-    this.addRoads();
+    void this.addRoadTiles();
+    void this.populateAssets();
   }
 
   private addGround() {
@@ -134,64 +137,34 @@ export class CityScene {
     }
   }
 
-  private addRoads() {
-    for (const road of cityLayout.roads) {
-      this.addRoadSegment(road);
-    }
-
-    for (const x of [-38, 0, 38]) {
-      for (const z of [-34, 0, 34]) {
-        const marker = new THREE.Mesh(new THREE.BoxGeometry(8.4, 0.08, 8.4), cityMaterials.road);
-        marker.position.set(x, 0.28, z);
-        marker.receiveShadow = true;
-        this.scene.add(marker);
-      }
-    }
-  }
-
-  private addRoadSegment(road: RoadDefinition) {
-    const roadWidth = road.orientation === "horizontal" ? road.length : road.width;
-    const roadDepth = road.orientation === "horizontal" ? road.width : road.length;
-
-    const sidewalk = new THREE.Mesh(
-      new THREE.BoxGeometry(roadWidth + 5, 0.18, roadDepth + 5),
-      cityMaterials.sidewalk,
-    );
-    sidewalk.position.set(road.x, 0.12, road.z);
-    sidewalk.receiveShadow = true;
-    this.scene.add(sidewalk);
-
-    const asphalt = new THREE.Mesh(
-      new THREE.BoxGeometry(roadWidth, 0.22, roadDepth),
-      cityMaterials.road,
-    );
-    asphalt.position.set(road.x, 0.26, road.z);
-    asphalt.receiveShadow = true;
-    this.scene.add(asphalt);
-
-    const laneLength = road.orientation === "horizontal" ? road.length - 10 : 0.35;
-    const laneDepth = road.orientation === "horizontal" ? 0.35 : road.length - 10;
-    const lane = new THREE.Mesh(new THREE.BoxGeometry(laneLength, 0.05, laneDepth), cityMaterials.lane);
-    lane.position.set(road.x, 0.4, road.z);
-    this.scene.add(lane);
-  }
-
-  private async populateAssets() {
-    const definitions = [...cityLayout.buildings, ...cityLayout.props];
-    const loadedObjects = await Promise.all(
-      definitions.map(async (definition) => this.assetLoader.createObject(definition)),
+  private async addRoadTiles() {
+    const tiles = await Promise.all(
+      cityLayout.roadTiles.map((tile) => this.roadAssetLoader.createTile(tile, ROAD_TILE_SIZE)),
     );
 
     if (this.disposed) {
       return;
     }
 
-    for (const object of loadedObjects) {
-      this.scene.add(object);
-      this.visibleObjectCount += 1;
+    for (const tile of tiles) {
+      this.scene.add(tile);
+    }
+  }
+
+  private async populateAssets() {
+    const objects = await Promise.all(
+      [...cityLayout.buildings, ...cityLayout.props].map((definition) =>
+        this.assetLoader.createObject(definition),
+      ),
+    );
+
+    if (this.disposed) {
+      return;
     }
 
-    this.emitStats();
+    for (const object of objects) {
+      this.scene.add(object);
+    }
   }
 
   private attachEvents() {
@@ -282,8 +255,9 @@ export class CityScene {
 
   private emitStats() {
     this.options.onStatsChange?.({
-      loadedAssets: this.visibleObjectCount,
-      totalObjects: cityObjectCount,
+      roadTiles: cityRoadTileCount,
+      blocks: cityLotCount,
+      homes: suburbanHomeCount,
       cameraMode: `Orthographic ${this.zoom.toFixed(1)}x`,
     });
   }

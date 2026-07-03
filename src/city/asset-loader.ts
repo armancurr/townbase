@@ -7,10 +7,21 @@ type LoadedAsset = {
   scene: THREE.Group;
 };
 
+type AssetPack = NonNullable<CityObjectDefinition["pack"]>;
+
 const MODEL_SCALE_MULTIPLIER = 1.85;
 
-const assetModules = import.meta.glob(
+const industrialAssetModules = import.meta.glob(
   "../../assets/kenney_city-kit-industrial_1.0/Models/GLB format/*.glb",
+  {
+    query: "?url",
+    import: "default",
+    eager: true,
+  },
+) as Record<string, string>;
+
+const suburbanAssetModules = import.meta.glob(
+  "../../assets/kenney_city-kit-suburban_20/Models/GLB format/*.glb",
   {
     query: "?url",
     import: "default",
@@ -27,13 +38,31 @@ const textureModules = import.meta.glob(
   },
 ) as Record<string, string>;
 
-const assetUrls = new Map<CityAssetKey, string>();
+const packTextureUrls = {
+  industrial: new URL(
+    "../../assets/kenney_city-kit-industrial_1.0/Models/GLB format/Textures/colormap.png",
+    import.meta.url,
+  ).href,
+  suburban: new URL(
+    "../../assets/kenney_city-kit-suburban_20/Models/GLB format/Textures/colormap.png",
+    import.meta.url,
+  ).href,
+} satisfies Record<AssetPack, string>;
+
+const assetUrls = new Map<string, string>();
 const textureUrls = new Map<NonNullable<CityObjectDefinition["variant"]>, string>();
 
-for (const [path, url] of Object.entries(assetModules)) {
+for (const [path, url] of Object.entries(industrialAssetModules)) {
   const fileName = path.split("/").pop()?.replace(".glb", "") as CityAssetKey | undefined;
   if (fileName) {
-    assetUrls.set(fileName, url);
+    assetUrls.set(assetCacheKey("industrial", fileName), url);
+  }
+}
+
+for (const [path, url] of Object.entries(suburbanAssetModules)) {
+  const fileName = path.split("/").pop()?.replace(".glb", "") as CityAssetKey | undefined;
+  if (fileName) {
+    assetUrls.set(assetCacheKey("suburban", fileName), url);
   }
 }
 
@@ -46,10 +75,31 @@ for (const [path, url] of Object.entries(textureModules)) {
   }
 }
 
+function assetCacheKey(pack: AssetPack, key: CityAssetKey) {
+  return `${pack}:${key}`;
+}
+
+function createLoadingManager(pack: AssetPack) {
+  const manager = new THREE.LoadingManager();
+
+  manager.setURLModifier((url) => {
+    if (url.endsWith("Textures/colormap.png")) {
+      return packTextureUrls[pack];
+    }
+
+    return url;
+  });
+
+  return manager;
+}
+
 export class CityAssetLoader {
-  private readonly loader = new GLTFLoader();
+  private readonly loaders = {
+    industrial: new GLTFLoader(createLoadingManager("industrial")),
+    suburban: new GLTFLoader(createLoadingManager("suburban")),
+  } satisfies Record<AssetPack, GLTFLoader>;
   private readonly textureLoader = new THREE.TextureLoader();
-  private readonly assets = new Map<CityAssetKey, Promise<LoadedAsset>>();
+  private readonly assets = new Map<string, Promise<LoadedAsset>>();
   private readonly textures = new Map<string, Promise<THREE.Texture>>();
 
   get loadedCount() {
@@ -57,12 +107,13 @@ export class CityAssetLoader {
   }
 
   async createObject(definition: CityObjectDefinition) {
-    const loadedAsset = await this.load(definition.asset);
+    const pack = definition.pack ?? "industrial";
+    const loadedAsset = await this.load(pack, definition.asset);
     const object = loadedAsset.scene.clone(true);
 
     this.prepareObject(object);
 
-    if (definition.variant) {
+    if (pack === "industrial" && definition.variant) {
       await this.applyVariantTexture(object, definition.variant);
     }
 
@@ -74,23 +125,24 @@ export class CityAssetLoader {
     return object;
   }
 
-  private load(key: CityAssetKey) {
-    const cached = this.assets.get(key);
+  private load(pack: AssetPack, key: CityAssetKey) {
+    const cacheKey = assetCacheKey(pack, key);
+    const cached = this.assets.get(cacheKey);
     if (cached) {
       return cached;
     }
 
-    const url = assetUrls.get(key);
+    const url = assetUrls.get(cacheKey);
     if (!url) {
-      throw new Error(`Missing industrial city asset: ${key}`);
+      throw new Error(`Missing ${pack} city asset: ${key}`);
     }
 
-    const request = this.loader.loadAsync(url).then((gltf) => ({
+    const request = this.loaders[pack].loadAsync(url).then((gltf) => ({
       key,
       scene: gltf.scene,
     }));
 
-    this.assets.set(key, request);
+    this.assets.set(cacheKey, request);
     return request;
   }
 

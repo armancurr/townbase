@@ -1,11 +1,12 @@
 import Phaser from "phaser";
 import { IsometricMovementScene } from "./isometric-movement-scene";
-import type { RoadTile } from "./road-layout";
-import type { BakedRoadSprites } from "./road-sprite-baker";
+import type { BakedPlaceableSprites } from "./placeable-sprite-baker";
+import type { PlacedTile } from "./placed-assets";
 
 export type MovementSceneData = {
-  roadLayout: RoadTile[];
-  roadSprites: BakedRoadSprites;
+  placedTiles: PlacedTile[];
+  placeableSprites: BakedPlaceableSprites;
+  onCellClick: (col: number, row: number) => void;
 };
 
 export function createMovementGameConfig(

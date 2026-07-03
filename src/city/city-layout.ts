@@ -471,20 +471,26 @@ const roadDecor: CityObjectDefinition[] = [
   { asset: "tree-large", pack: "suburban", x: 19, z: -5, scale: 4 },
 ];
 
+function isLoadableObject(definition: CityObjectDefinition) {
+  return definition.pack !== "suburban";
+}
+
 const lots: LotDefinition[] = [
-  ...houses.map((house) => ({ x: house.x, z: house.z, width: 12, depth: 12 })),
   ...amenities.map((building) => ({ x: building.x, z: building.z, width: 15, depth: 14 })),
-  { x: -58, z: -54, width: 18, depth: 16 },
-  { x: 59, z: -36, width: 16, depth: 14 },
-  { x: -62, z: 55, width: 20, depth: 18 },
-  { x: 31, z: 58, width: 18, depth: 16 },
 ];
 
 export const cityLayout: CityLayout = {
   roadTiles: Array.from(roadTileMap.values()),
   lots,
-  buildings: [...houses, ...amenities],
-  props: [...driveways, ...amenityProps, ...parks, ...lotDetails, ...neighborhoodEdges, ...roadDecor],
+  buildings: [...houses, ...amenities].filter(isLoadableObject),
+  props: [
+    ...driveways,
+    ...amenityProps,
+    ...parks,
+    ...lotDetails,
+    ...neighborhoodEdges,
+    ...roadDecor,
+  ].filter(isLoadableObject),
 };
 
 export const cityObjectCount =

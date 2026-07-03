@@ -8,20 +8,12 @@ type LoadedAsset = {
 };
 
 type AssetPack = NonNullable<CityObjectDefinition["pack"]>;
+type LoadableAssetPack = Exclude<AssetPack, "suburban">;
 
 const MODEL_SCALE_MULTIPLIER = 1.85;
 
 const industrialAssetModules = import.meta.glob(
   "../../assets/kenney_city-kit-industrial_1.0/Models/GLB format/*.glb",
-  {
-    query: "?url",
-    import: "default",
-    eager: true,
-  },
-) as Record<string, string>;
-
-const suburbanAssetModules = import.meta.glob(
-  "../../assets/kenney_city-kit-suburban_20/Models/GLB format/*.glb",
   {
     query: "?url",
     import: "default",
@@ -52,15 +44,11 @@ const packTextureUrls = {
     "../../assets/kenney_city-kit-industrial_1.0/Models/GLB format/Textures/colormap.png",
     import.meta.url,
   ).href,
-  suburban: new URL(
-    "../../assets/kenney_city-kit-suburban_20/Models/GLB format/Textures/colormap.png",
-    import.meta.url,
-  ).href,
   commercial: new URL(
     "../../assets/kenney_city-kit-commercial_2.1/Models/GLB format/Textures/colormap.png",
     import.meta.url,
   ).href,
-} satisfies Record<AssetPack, string>;
+} satisfies Record<LoadableAssetPack, string>;
 
 const assetUrls = new Map<string, string>();
 const textureUrls = new Map<NonNullable<CityObjectDefinition["variant"]>, string>();
@@ -69,13 +57,6 @@ for (const [path, url] of Object.entries(industrialAssetModules)) {
   const fileName = path.split("/").pop()?.replace(".glb", "") as CityAssetKey | undefined;
   if (fileName) {
     assetUrls.set(assetCacheKey("industrial", fileName), url);
-  }
-}
-
-for (const [path, url] of Object.entries(suburbanAssetModules)) {
-  const fileName = path.split("/").pop()?.replace(".glb", "") as CityAssetKey | undefined;
-  if (fileName) {
-    assetUrls.set(assetCacheKey("suburban", fileName), url);
   }
 }
 
@@ -95,11 +76,11 @@ for (const [path, url] of Object.entries(textureModules)) {
   }
 }
 
-function assetCacheKey(pack: AssetPack, key: CityAssetKey) {
+function assetCacheKey(pack: LoadableAssetPack, key: CityAssetKey) {
   return `${pack}:${key}`;
 }
 
-function createLoadingManager(pack: AssetPack) {
+function createLoadingManager(pack: LoadableAssetPack) {
   const manager = new THREE.LoadingManager();
 
   manager.setURLModifier((url) => {
@@ -116,9 +97,8 @@ function createLoadingManager(pack: AssetPack) {
 export class CityAssetLoader {
   private readonly loaders = {
     industrial: new GLTFLoader(createLoadingManager("industrial")),
-    suburban: new GLTFLoader(createLoadingManager("suburban")),
     commercial: new GLTFLoader(createLoadingManager("commercial")),
-  } satisfies Record<AssetPack, GLTFLoader>;
+  } satisfies Record<LoadableAssetPack, GLTFLoader>;
   private readonly textureLoader = new THREE.TextureLoader();
   private readonly assets = new Map<string, Promise<LoadedAsset>>();
   private readonly textures = new Map<string, Promise<THREE.Texture>>();
@@ -129,6 +109,10 @@ export class CityAssetLoader {
 
   async createObject(definition: CityObjectDefinition) {
     const pack = definition.pack ?? "industrial";
+    if (pack === "suburban") {
+      return new THREE.Group();
+    }
+
     const loadedAsset = await this.load(pack, definition.asset);
     const object = loadedAsset.scene.clone(true);
 
@@ -146,7 +130,7 @@ export class CityAssetLoader {
     return object;
   }
 
-  private load(pack: AssetPack, key: CityAssetKey) {
+  private load(pack: LoadableAssetPack, key: CityAssetKey) {
     const cacheKey = assetCacheKey(pack, key);
     const cached = this.assets.get(cacheKey);
     if (cached) {

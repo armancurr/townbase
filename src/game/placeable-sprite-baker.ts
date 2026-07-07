@@ -23,32 +23,13 @@ import type {
 // IndexedDB so a given browser only ever pays the render cost once.
 // ---------------------------------------------------------------------------
 
-const textureModules = {
-	roads: import.meta.glob(
-		"../../assets/kenney_city-kit-roads/Models/GLB format/Textures/*.png",
-		{
-			query: "?url",
-			import: "default",
-			eager: true,
-		},
-	) as Record<string, string>,
-	commercial: import.meta.glob(
-		"../../assets/kenney_city-kit-commercial_2.1/Models/GLB format/Textures/*.png",
-		{ query: "?url", import: "default", eager: true },
-	) as Record<string, string>,
-	industrial: import.meta.glob(
-		"../../assets/kenney_city-kit-industrial_1.0/Models/GLB format/Textures/*.png",
-		{ query: "?url", import: "default", eager: true },
-	) as Record<string, string>,
-	suburban: import.meta.glob(
-		"../../assets/kenney_city-kit-suburban_20/Models/GLB format/Textures/*.png",
-		{ query: "?url", import: "default", eager: true },
-	) as Record<string, string>,
-	characters: import.meta.glob(
-		"../../assets/kenney_blocky-characters_20/Models/GLB format/Textures/*.png",
-		{ query: "?url", import: "default", eager: true },
-	) as Record<string, string>,
-} satisfies Record<BakedAssetPack, Record<string, string>>;
+const assetBases = {
+	roads: "/assets/kenney_city-kit-roads",
+	commercial: "/assets/kenney_city-kit-commercial_2.1",
+	industrial: "/assets/kenney_city-kit-industrial_1.0",
+	suburban: "/assets/kenney_city-kit-suburban_20",
+	characters: "/assets/kenney_blocky-characters_20",
+} satisfies Record<BakedAssetPack, string>;
 
 const CAMERA_DIRECTION = new THREE.Vector3(1, 0.8165, 1).normalize();
 const CAMERA_DISTANCE = 18;
@@ -68,12 +49,7 @@ function createLoadingManager(getPack: () => BakedAssetPack) {
 	manager.setURLModifier((url) => {
 		const textureName = url.split("/").pop();
 		if (textureName) {
-			const texturePath = Object.keys(textureModules[getPack()]).find((path) =>
-				path.endsWith(`/${textureName}`),
-			);
-			if (texturePath) {
-				return textureModules[getPack()][texturePath];
-			}
+			return `${assetBases[getPack()]}/Models/GLB format/Textures/${textureName}`;
 		}
 
 		return url;

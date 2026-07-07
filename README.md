@@ -36,7 +36,7 @@ Vercel auto-detects `Dockerfile.vercel` at the repo root and deploys the app as 
 Deploy from the CLI:
 
 ```bash
-vercel deploy
+bunx vercel@latest deploy
 ```
 
 Or connect the Git repo in Vercel and push to trigger a new deployment.

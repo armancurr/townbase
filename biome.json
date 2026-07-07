@@ -1,0 +1,27 @@
+{
+	"$schema": "https://biomejs.dev/schemas/2.5.2/schema.json",
+	"files": {
+		"includes": [
+			"**",
+			"!node_modules",
+			"!dist",
+			"!.agents",
+			"!docs",
+			"!assets",
+			"!public",
+			"!convex/_generated"
+		]
+	},
+	"formatter": {
+		"enabled": true
+	},
+	"linter": {
+		"enabled": true,
+		"rules": {
+			"preset": "recommended",
+			"correctness": {
+				"useExhaustiveDependencies": "off"
+			}
+		}
+	}
+}

@@ -1,0 +1,16 @@
+services:
+  frontend:
+    image: oven/bun:1
+    working_dir: /app
+    command: sh -c "bun install --frozen-lockfile && bun run dev --host 0.0.0.0"
+    ports:
+      - "3000:3000"
+    environment:
+      HUSKY: 0
+      VITE_CONVEX_URL: ${VITE_CONVEX_URL}
+    volumes:
+      - .:/app
+      - node_modules:/app/node_modules
+
+volumes:
+  node_modules:

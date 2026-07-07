@@ -12,6 +12,7 @@ Check for an existing entry first; update/append instead of duplicating.
 Entry format:
 
 ## [YYYY-MM-DD] Short title
+
 - Learned: 1-2 lines
 - Files: paths touched
 - Status: resolved / open

@@ -7,21 +7,23 @@ import "./index.css";
 const root = document.getElementById("root");
 
 if (!root) {
-  throw new Error("Root element not found.");
+	throw new Error("Root element not found.");
 }
 
 const convexUrl = import.meta.env.VITE_CONVEX_URL;
 
 if (!convexUrl) {
-  throw new Error("Missing VITE_CONVEX_URL. Run `bunx convex dev --once` to configure Convex.");
+	throw new Error(
+		"Missing VITE_CONVEX_URL. Run `bunx convex dev --once` to configure Convex.",
+	);
 }
 
 const convex = new ConvexReactClient(convexUrl);
 
 createRoot(root).render(
-  <StrictMode>
-    <ConvexProvider client={convex}>
-      <App />
-    </ConvexProvider>
-  </StrictMode>,
+	<StrictMode>
+		<ConvexProvider client={convex}>
+			<App />
+		</ConvexProvider>
+	</StrictMode>,
 );

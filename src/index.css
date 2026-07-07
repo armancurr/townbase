@@ -46,13 +46,6 @@ input {
   display: none;
 }
 
-[cmdk-overlay] {
-  position: fixed;
-  inset: 0;
-  z-index: 9;
-  background: transparent;
-}
-
 @keyframes editor-spinner-spin {
   to {
     transform: rotate(360deg);

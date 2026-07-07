@@ -1,37 +1,6 @@
 import Phaser from "phaser";
 import { IsometricMovementScene } from "./isometric-movement-scene";
-import type {
-  BakedPlaceableSprite,
-  BakedPlaceableSprites,
-  SpriteFootprint,
-} from "./placeable-sprite-baker";
-import type { PlacedTile, TileRotation } from "./placed-assets";
-
-export type CellClickAction = "place" | "erase";
-
-export type PlacementPreview = {
-  cells: Array<{ col: number; row: number }>;
-  isValid: boolean;
-  intent: "place" | "remove";
-  assetId?: string;
-  rotation?: TileRotation;
-  textureKey?: string;
-  footprint?: SpriteFootprint;
-};
-
-export type MovementSceneData = {
-  placedTiles: PlacedTile[];
-  placeableSprites: BakedPlaceableSprites;
-  characters: Array<{
-    id: string;
-    name: string;
-    cell: { col: number; row: number };
-    sprites: Map<TileRotation, BakedPlaceableSprite>;
-  }>;
-  allowKeyboardMovement: boolean;
-  onCellClick: (col: number, row: number, action: CellClickAction) => void;
-  getPlacementPreview: (col: number, row: number) => PlacementPreview | null;
-};
+import type { MovementSceneData } from "../types";
 
 export function createMovementGameConfig(
   parent: HTMLElement,

@@ -2,71 +2,18 @@ import {
   cellKey,
   findGridPath,
   isGridCellInBounds,
-  type ActionResult,
-  type GridCell,
-  type WorldModel,
 } from "./grid-world";
-
-export type CharacterActivity = "idle" | "moving" | "wandering" | "talking" | "waiting";
-
-export type CharacterAgentState = {
-  id: string;
-  name: string;
-  cell: GridCell;
-  activity: CharacterActivity;
-  conversationId: string | null;
-  lastSpokeAt: number;
-  chatCooldownUntil: number;
-  currentTask: AgentTask | null;
-  nextTaskAt: number;
-};
-
-export type ChatMessage = {
-  id: string;
-  fromCharacterId: string;
-  fromName: string;
-  target: "all" | string[];
-  text: string;
-  createdAt: number;
-};
-
-export type ConversationState = {
-  id: string;
-  participantIds: string[];
-  speakerIndex: number;
-  turnCount: number;
-  maxTurns: number;
-  lastMessageAt: number;
-};
-
-export type AgentActionId =
-  | "visit_place"
-  | "inspect_place"
-  | "patrol_area"
-  | "meet_character"
-  | "wander"
-  | "move_to_cell"
-  | "say"
-  | "wait"
-  | "leave_conversation";
-
-export type AgentTaskId = AgentActionId;
-
-export type AgentTask = {
-  taskId: AgentTaskId;
-  target: GridCell | null;
-  status: "active" | "pausing" | "complete";
-  startedAt: number;
-};
-
-export type AgentDecision = {
-  actionId: AgentActionId;
-  reason: string;
-  targetCell?: GridCell;
-  targetCharacterId?: string;
-  message?: string;
-  target?: "all" | string[];
-};
+import type {
+  ActionResult,
+  AgentDecision,
+  AgentTask,
+  AgentTaskId,
+  CharacterAgentState,
+  ChatMessage,
+  ConversationState,
+  GridCell,
+  WorldModel,
+} from "../types";
 
 type AgentBrainControllerOptions = {
   getWorld: () => WorldModel | null;

@@ -1,0 +1,15 @@
+There is a change of plan and a major refactor needs to be done. THe entire agent related stuff needsd to be deprecated. That is for later, I will explain you my current vision before you plan anything.
+
+The game will basically be an empty town. This game will be accessible to view publically for anyone. But doing actions like creating a road or placing assets will require elevated access There will be 3 types of roles in the game for users who have ben authenticated: Overseer, Settler and Visitor. My idea is by default the game will be public but in order to actually become a player you will need invitation access.
+
+In the database me and my teamates will already be present and we are the admins (Overseer) and the guest user who are not authenticated will be the Visitor. In the inviation user has to send their email which we verify then that email gets added to our users table, we basically make them a player (Settler).
+
+Now we have the 3 types of user in place we now go on to build the new feature which I had in mind previously. Basically the map a single player at first gets will be a simple large piece of land with different types of terrain. You land on the map and you can control the player and make him move in the game and explore the walkable map. There should be no auto task or AI agent doing task or anyhting for now. They should be removed entirely.
+
+The main feature is building an actual communitee or civilization along with other people. Now the thing is, we earlier had AI agents in mind but deprecate that and now we will have those invited players as actual player in the town. Any other player that has been invited can now setup his town and start creating roads, assets in the map. It's basically a full-blown game now. I want you to search the web to check if convex's realtime supports this and makes this possible or not.
+
+Initially we will not be holding too many players. 5-10 players at max, and need to make sure the server holds up at such load. At max, 10 players building and laying assets on the map is the load we should be able to handle. Sync should be done correctly although convex is realtime but we need sync not just with me and other players but in all the clients that stream the server data. Also this will be a properly setup client/server architecture. The client will just send actions to the server, and server should be made to handle sync and action precisely so the game works nicely. You will know better how to architect this as per the game needs.
+
+To conclude, the main goal is that let's say me and my friends, 4 people land on the site, by default the map will be large with little to no settlement, we start creating assets, houses, roads, and the things I create and lay out cannot be undone by other players. Basically any asset placed by me on a cell is mine unless cleared. So each cell essentially has RBAC.
+
+This is the initial idea for now. Use explore agents to get relevant context and ask me as many questions you can using the question tool before finalzing this implementation plan.

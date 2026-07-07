@@ -2,10 +2,15 @@ import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import {
   placeableSpriteKey,
-  type BakedAssetPack,
-  type PlaceableAsset,
-  type TileRotation,
 } from "./placed-assets";
+import type {
+  BakedAssetPack,
+  BakedPlaceableSprite,
+  BakedPlaceableSprites,
+  PlaceableAsset,
+  SpriteFootprint,
+  TileRotation,
+} from "../types";
 
 // ---------------------------------------------------------------------------
 // Placeable sprite baker
@@ -52,23 +57,6 @@ const CROP_PADDING_PX = 8;
 const PX_PER_WORLD = TARGET_DIAMOND_PX / Math.SQRT2;
 const HALF_SPAN = CANVAS_PX / 2 / PX_PER_WORLD;
 const ROTATIONS: TileRotation[] = [0, 90, 180, 270];
-
-export type SpriteFootprint = {
-  cols: number;
-  rows: number;
-};
-
-export type BakedPlaceableSprite = {
-  canvas: HTMLCanvasElement;
-  originX: number;
-  originY: number;
-  footprint: SpriteFootprint;
-};
-
-export type BakedPlaceableSprites = {
-  sprites: Map<string, BakedPlaceableSprite>;
-  diamondPx: number;
-};
 
 export function createSpriteStore(): BakedPlaceableSprites {
   return { sprites: new Map(), diamondPx: TARGET_DIAMOND_PX };

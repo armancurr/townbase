@@ -2,10 +2,9 @@ import {
   bakeSprite,
   createSpriteStore,
   TARGET_DIAMOND_PX,
-  type BakedPlaceableSprite,
-  type BakedPlaceableSprites,
 } from "./placeable-sprite-baker";
-import { placeableSpriteKey, type PlaceableAsset, type TileRotation } from "./placed-assets";
+import { placeableSpriteKey } from "./placed-assets";
+import type { BakedPlaceableSprite, BakedPlaceableSprites, PlaceableAsset, TileRotation } from "../types";
 
 // ---------------------------------------------------------------------------
 // On-demand placeable sprite resolution.

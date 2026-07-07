@@ -1,31 +1,10 @@
-export type TileRotation = 0 | 90 | 180 | 270;
-
-export type PlaceableAssetCategory = "road" | "building" | "nature";
-
-export type AssetPack =
-  | "roads"
-  | "commercial"
-  | "industrial"
-  | "suburban"
-  | "nature"
-  | "characters";
-
-export type PlaceableAsset = {
-  id: string;
-  label: string;
-  category: PlaceableAssetCategory;
-  pack: AssetPack;
-  previewUrl: string;
-  modelUrl: string;
-};
-
-export type PlacedTile = {
-  id: string;
-  assetId: string;
-  col: number;
-  row: number;
-  rotation: TileRotation;
-};
+import type {
+  AssetPack,
+  BakedAssetPack,
+  PlaceableAsset,
+  PlaceableAssetCategory,
+  TileRotation,
+} from "../types";
 
 export const assetPackLabels: Record<AssetPack, string> = {
   roads: "Roads",
@@ -51,8 +30,6 @@ export const assetPackOrder: AssetPack[] = [
 export const bakedAssetPacks: AssetPack[] = ["roads", "commercial", "industrial", "suburban"];
 
 const emptyPreview = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==";
-
-export type BakedAssetPack = "roads" | "commercial" | "industrial" | "suburban" | "characters";
 
 const modelModules = {
   roads: import.meta.glob("../../assets/kenney_city-kit-roads/Models/GLB format/*.glb", {

@@ -1,34 +1,17 @@
 import * as EasyStar from "easystarjs";
-import type { BakedPlaceableSprites, SpriteFootprint } from "./placeable-sprite-baker";
-import { placeableAssetsById, placeableSpriteKey, type PlacedTile } from "./placed-assets";
+import { placeableAssetsById, placeableSpriteKey } from "./placed-assets";
+import type {
+  BakedPlaceableSprites,
+  GridCell,
+  PlacedTile,
+  SpriteFootprint,
+  WorldModel,
+  WorldPlace,
+} from "../types";
 
 export const GRID_COLS = 40;
 export const GRID_ROWS = 40;
 export const PLAYER_START_CELL: GridCell = { col: 20, row: 20 };
-
-export type GridCell = {
-  col: number;
-  row: number;
-};
-
-export type WorldPlace = {
-  id: string;
-  kind: "home_or_building" | "work_site" | "nature_spot" | "road_patrol";
-  label: string;
-  entryCell: GridCell;
-  tileId?: string;
-};
-
-export type WorldModel = {
-  cols: number;
-  rows: number;
-  blockedCellKeys: Set<string>;
-  occupiedCellKeys: Set<string>;
-  home: WorldPlace;
-  places: Record<WorldPlace["kind"], WorldPlace>;
-};
-
-export type ActionResult = { success: true; message?: string } | { success: false; reason: string };
 
 export function cellKey(cell: GridCell) {
   return `${cell.col}:${cell.row}`;

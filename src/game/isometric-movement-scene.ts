@@ -8,12 +8,18 @@ import {
   footprintStart,
   isGridCellInBounds,
   occupiedCellKeys,
-  type ActionResult,
-  type GridCell,
 } from "./grid-world";
-import type { CellClickAction, MovementSceneData } from "./movement-game-config";
-import type { BakedPlaceableSprite, SpriteFootprint } from "./placeable-sprite-baker";
-import { placeableSpriteKey, type PlacedTile, type TileRotation } from "./placed-assets";
+import { placeableSpriteKey } from "./placed-assets";
+import type {
+  ActionResult,
+  BakedPlaceableSprite,
+  CellClickAction,
+  GridCell,
+  MovementSceneData,
+  PlacedTile,
+  SpriteFootprint,
+  TileRotation,
+} from "../types";
 
 const TILE_WIDTH = 128;
 const TILE_HEIGHT = 64;

@@ -2,20 +2,8 @@ import {
   cellKey,
   findGridPath,
   isGridCellInBounds,
-  type ActionResult,
-  type GridCell,
-  type WorldModel,
 } from "./grid-world";
-
-export type PlayerBrainSnapshot = {
-  status: "paused" | "idle" | "moving" | "waiting" | "blocked";
-  goal: "go_home" | "wander" | "wait";
-  action: "none" | "pathfind" | "walk" | "wait";
-  targetCell: GridCell | null;
-  pathLength: number;
-  lastMessage: string;
-  isPaused: boolean;
-};
+import type { ActionResult, GridCell, PlayerBrainSnapshot, WorldModel } from "../types";
 
 export const initialPlayerBrainSnapshot: PlayerBrainSnapshot = {
   status: "idle",

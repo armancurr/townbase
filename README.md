@@ -34,6 +34,18 @@ Run the production image:
 docker run --rm -p 8080:80 townbase
 ```
 
+## Vercel
+
+This repo includes `Dockerfile.vercel` for container deployments on Vercel.
+
+Deploy from the CLI:
+
+```bash
+vercel deploy
+```
+
+Or connect the Git repo in Vercel and push to trigger a new deployment.
+
 ## CLI
 
 The package exposes a `townbase` binary that serves the built `dist` app:
